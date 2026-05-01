@@ -1,12 +1,19 @@
+<<<<<<< HEAD
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import TasksPage from './pages/TasksPage';
+=======
+import { useState } from "react";
+import { LoginPage } from "./pages/LoginPage";
+import { DashboardPage } from "./pages/DashboardPage";
+>>>>>>> develop
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+<<<<<<< HEAD
   return (
     <Router>
       <Routes>
@@ -17,4 +24,11 @@ export default function App() {
       </Routes>
     </Router>
   );
+=======
+  if (isLoggedIn) {
+    return <DashboardPage onLogout={() => setIsLoggedIn(false)} />;
+  }
+
+  return <LoginPage onLoginSuccess={() => setIsLoggedIn(true)} />;
+>>>>>>> develop
 }
