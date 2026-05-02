@@ -18,17 +18,12 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     setError("");
     setIsLoading(true);
 
-   try {
-  // TODO: Раскомментировать, когда Алиса сделает бэкенд
-  // await login(email, password);
-  
-  // МОК-авторизация для тестов:
-  await new Promise(resolve => setTimeout(resolve, 300)); // имитация задержки
-  
-  onLoginSuccess(); // ← ЭТО ДОЛЖНО ОСТАТЬСЯ! Обязательно!
-} catch {
-  setError("Не удалось войти. Проверь email и пароль.");
-}
+    try {
+      await login(email, password);
+      onLoginSuccess();
+      
+    } catch {
+      setError("Не удалось войти. Проверь email и пароль.");
     } finally {
       setIsLoading(false);
     }
