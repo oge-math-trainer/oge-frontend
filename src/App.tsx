@@ -5,7 +5,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import TasksPage from './pages/TasksPage';
 import { DiagnosticPage } from './pages/DiagnosticPage';
 import { ResultPage } from './pages/ResultPage';
-import { ProfilePage } from './pages/ProfilePage'; // ← ДОБАВЛЕНО
+import { HomePage } from "./pages/HomePage";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -16,10 +16,13 @@ export default function App() {
         <Route path="/login" element={<LoginPage onLoginSuccess={() => setIsLoggedIn(true)} />} />
         <Route path="/dashboard" element={isLoggedIn ? <DashboardPage onLogout={() => setIsLoggedIn(false)} /> : <Navigate to="/login" replace />} />
         <Route path="/tasks" element={isLoggedIn ? <TasksPage /> : <Navigate to="/login" replace />} />
-        <Route path="/diagnostic" element={isLoggedIn ? <DiagnosticPage /> : <Navigate to="/login" replace />} />
-        <Route path="/result" element={isLoggedIn ? <ResultPage /> : <Navigate to="/login" replace />} />
-        <Route path="/profile" element={isLoggedIn ? <ProfilePage /> : <Navigate to="/login" replace />} /> {/* ← ДОБАВЛЕНО */}
-        <Route path="/" element={<Navigate to={isLoggedIn ? "/dashboard" : "/login"} replace />} />
+        <Route path="/diagnostic" element={isLoggedIn ? <DiagnosticPage onFinish={() => {}} /> : <Navigate to="/login" replace />} />
+        <Route path="/result" element={isLoggedIn ? <ResultPage
+  answers={[]}
+  onRestart={() => {}}
+/> : <Navigate to="/login" replace />} />
+        <Route path="/" element={<HomePage />} />
+        
       </Routes>
     </Router>
   );
