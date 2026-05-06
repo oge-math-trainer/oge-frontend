@@ -1,5 +1,6 @@
 import "./DashboardPage.css";
-
+import { Link } from "react-router-dom";
+import "./DashboardPage.css";
 type DashboardPageProps = {
   onLogout: () => void;
 };
@@ -27,7 +28,12 @@ export function DashboardPage({ onLogout }: DashboardPageProps) {
         </div>
 
         <div className="dashboard-actions">
-          <button type="button">Начать тренировку</button>
+          <Link className="dashboard-primary-link" to="/tasks">
+  Начать тренировку
+</Link>
+<Link className="dashboard-secondary-link" to="/diagnostic">
+  Пройти диагностику
+</Link>
           <button type="button" className="secondary-button" onClick={onLogout}>
             Выйти
           </button>

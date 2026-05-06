@@ -12,12 +12,29 @@ type TaskStatus = 'idle' | 'loading' | 'success' | 'error';
 type AiState = 'idle' | 'hint' | 'explain' | 'chat';
 
 export default function TasksPage() {
-  const [task] = useState<Task>({
+  const tasks: Task[] = [
+  {
     id: 1,
-    question: 'Решите уравнение: 3x + 7 = 22',
-    correctAnswer: '5',
-    formatHint: 'Введите число'
-  });
+    question: "Решите уравнение: 3x + 7 = 22",
+    correctAnswer: "5",
+    formatHint: "Введите число",
+  },
+  {
+    id: 2,
+    question: "Найдите значение выражения: 12 + 8 · 2",
+    correctAnswer: "28",
+    formatHint: "Введите число",
+  },
+  {
+    id: 3,
+    question: "Найдите 20% от числа 150",
+    correctAnswer: "30",
+    formatHint: "Введите число",
+  },
+];
+
+const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
+const task = tasks[currentTaskIndex];
   
   const [answer, setAnswer] = useState<string>('');
   const [status, setStatus] = useState<TaskStatus>('idle');
@@ -39,17 +56,27 @@ export default function TasksPage() {
   };
 
   const handleCheck = () => {
-    setStatus('loading');
-    setTimeout(() => {
-      setStatus(answer === task.correctAnswer ? 'success' : 'error');
-    }, 600);
-  };
+  const normalizedAnswer = answer.trim().replace(",", ".");
+  const normalizedCorrectAnswer = task.correctAnswer.trim().replace(",", ".");
 
-  const handleNext = () => {
-    setAnswer('');
-    setStatus('idle');
-    setAiState('idle');
-  };
+  setStatus("loading");
+
+  setTimeout(() => {
+    setStatus(
+      normalizedAnswer === normalizedCorrectAnswer ? "success" : "error"
+    );
+  }, 600);
+};
+
+ const handleNext = () => {
+  setAnswer("");
+  setStatus("idle");
+  setAiState("idle");
+
+  setCurrentTaskIndex((prevIndex) =>
+    prevIndex === tasks.length - 1 ? 0 : prevIndex + 1
+  );
+};
 
   return (
     <div className="tasks-page">

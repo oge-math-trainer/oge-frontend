@@ -169,3 +169,18 @@ body {
   color: #1f2937;
   font-weight: 700;
 }
+
+.profile-training-link {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #4f46e5;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
