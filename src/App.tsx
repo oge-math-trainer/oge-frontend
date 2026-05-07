@@ -21,7 +21,7 @@ type DiagnosticAnswer = {
 };
 
 function AppRoutes() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('auth_token'));
   const [diagnosticAnswers, setDiagnosticAnswers] = useState<DiagnosticAnswer[]>([]);
   const navigate = useNavigate();
 
@@ -31,6 +31,7 @@ function AppRoutes() {
   }
 
   function handleLogout() {
+    localStorage.removeItem('auth_token');
     setIsLoggedIn(false);
     navigate("/login");
   }
@@ -38,23 +39,11 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-
-      <Route
-        path="/login"
-        element={<LoginPage onLoginSuccess={handleLoginSuccess} />}
-      />
-
+      <Route path="/login" element={<LoginPage onLoginSuccess={handleLoginSuccess} />} />
       <Route
         path="/dashboard"
-        element={
-          isLoggedIn ? (
-            <DashboardPage onLogout={handleLogout} />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
+        element={isLoggedIn ? <DashboardPage onLogout={handleLogout} /> : <Navigate to="/login" replace />}
       />
-
       <Route
         path="/diagnostic"
         element={
@@ -70,30 +59,21 @@ function AppRoutes() {
           )
         }
       />
-
       <Route
         path="/result"
         element={
           isLoggedIn ? (
-            <ResultPage
-              answers={diagnosticAnswers}
-              onRestart={() => navigate("/diagnostic")}
-            />
+            <ResultPage answers={diagnosticAnswers} onRestart={() => navigate("/diagnostic")} />
           ) : (
             <Navigate to="/login" replace />
           )
         }
       />
-
       <Route
         path="/profile"
         element={isLoggedIn ? <ProfilePage /> : <Navigate to="/login" replace />}
       />
-
-      <Route
-        path="/tasks"
-        element={isLoggedIn ? <TasksPage /> : <Navigate to="/login" replace />}
-      />
+      <Route path="/tasks" element={<TasksPage />} />
     </Routes>
   );
 }
