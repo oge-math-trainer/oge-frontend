@@ -13,7 +13,7 @@
  *    (см. документ «Суть MVP», раздел «Почему убрали свободный чат»).
  */
 
-const API_BASE: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
+const API_BASE: string = import.meta.env.VITE_API_URL ?? 'https://oge-backend-7v2t.onrender.com/api/v1';
 const API_PREFIX = '/api/v1';
 
 // ────────────────────────────────────────────────────────────
