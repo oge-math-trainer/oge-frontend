@@ -6,16 +6,61 @@ import {
   type ExplainResponse,
   tasksApi,
   ApiError,
-  clearAuthToken,
 } from '../api/tasks';
 
 type TaskStatus = 'idle' | 'loading' | 'success' | 'error';
 type AiState = 'idle' | 'hint' | 'explain';
 
+// Локальный пул задач для демо (используется, если backend недоступен)
+const DEMO_TASKS: Array<Task & { correctAnswer: string }> = [
+  {
+    id: 1,
+    question: 'Решите уравнение: 3x + 7 = 22',
+    formatHint: 'Введите число',
+    correctAnswer: '5',
+    mode: 'all', oge_number: 6, subtype_code: '', source: 'demo',
+  } as any,
+  {
+    id: 2,
+    question: 'Найдите значение выражения: 12 + 8 · 2',
+    formatHint: 'Введите число',
+    correctAnswer: '28',
+    mode: 'all', oge_number: 6, subtype_code: '', source: 'demo',
+  } as any,
+  {
+    id: 3,
+    question: 'Найдите 20% от числа 150',
+    formatHint: 'Введите число',
+    correctAnswer: '30',
+    mode: 'all', oge_number: 6, subtype_code: '', source: 'demo',
+  } as any,
+];
+
+const DEMO_HINTS: Record<number, string> = {
+  1: 'Перенеси число 7 в правую часть со знаком минус, затем раздели на 3.',
+  2: 'Сначала умножение: 8 · 2, потом прибавь 12. Помни порядок действий.',
+  3: 'Чтобы найти процент от числа, умножь число на процент и раздели на 100.',
+};
+
+const DEMO_EXPLANATIONS: Record<number, { explanation: string; steps: string[] }> = {
+  1: {
+    explanation: 'Линейное уравнение решается переносом неизвестного в одну часть, а чисел — в другую.',
+    steps: ['3x + 7 = 22', '3x = 22 − 7', '3x = 15', 'x = 15 / 3', 'x = 5'],
+  },
+  2: {
+    explanation: 'По правилу порядка действий, умножение выполняется раньше сложения.',
+    steps: ['12 + 8 · 2', '8 · 2 = 16', '12 + 16 = 28'],
+  },
+  3: {
+    explanation: 'Процент — это сотая часть числа. 20% означает 20/100 = 0.2.',
+    steps: ['20% от 150', '150 · 20 / 100', '3000 / 100', '= 30'],
+  },
+};
+
 export default function TasksPage() {
   const [task, setTask] = useState<Task | null>(null);
   const [taskLoading, setTaskLoading] = useState(true);
-  const [answer, setAnswer] = useState('');
+  const [answer, setAnswer] = useState<string>('');
   const [status, setStatus] = useState<TaskStatus>('idle');
   const [checkResult, setCheckResult] = useState<CheckAnswerResponse | null>(null);
   const [aiState, setAiState] = useState<AiState>('idle');
@@ -25,12 +70,14 @@ export default function TasksPage() {
   const [activeMode, setActiveMode] = useState<'weak' | 'all' | 'custom'>('all');
   const [isRefOpen, setIsRefOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [demoIndex, setDemoIndex] = useState(0);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   const taskAbortRef = useRef<AbortController | null>(null);
   const aiAbortRef = useRef<AbortController | null>(null);
   const cellRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const loadTask = async (mode: 'weak' | 'all' | 'custom') => {
+  const loadTask = async (mode: 'weak' | 'all' | 'custom', forceDemoNext = false) => {
     taskAbortRef.current?.abort();
     const ctrl = new AbortController();
     taskAbortRef.current = ctrl;
@@ -44,6 +91,16 @@ export default function TasksPage() {
     setCheckResult(null);
     setErrorMessage(null);
 
+    // Если уже в демо-режиме — сразу выдаём следующую демо-задачу
+    if (isDemoMode || forceDemoNext) {
+      const nextIndex = forceDemoNext ? (demoIndex + 1) % DEMO_TASKS.length : demoIndex;
+      setDemoIndex(nextIndex);
+      setTask(DEMO_TASKS[nextIndex]);
+      setIsDemoMode(true);
+      setTaskLoading(false);
+      return;
+    }
+
     try {
       const req =
         mode === 'custom'
@@ -51,22 +108,20 @@ export default function TasksPage() {
           : ({ mode } as const);
       const newTask = await tasksApi.generate(req, { signal: ctrl.signal });
       setTask(newTask);
+      setIsDemoMode(false);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
-      if (err instanceof ApiError && err.isAuthError) {
-        clearAuthToken();
-        window.location.href = '/login';
-        return;
-      }
-      setErrorMessage(err instanceof ApiError ? err.message : 'Ошибка загрузки задания');
+      // backend недоступен — переключаемся в демо-режим
+      setIsDemoMode(true);
+      setDemoIndex(0);
+      setTask(DEMO_TASKS[0]);
     } finally {
       setTaskLoading(false);
     }
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadTask(activeMode); // async fetch — setState вызывается только после await
+    loadTask(activeMode);
     return () => { taskAbortRef.current?.abort(); };
   }, [activeMode]);
 
@@ -75,7 +130,7 @@ export default function TasksPage() {
     const newAnswer = answer.split('');
     newAnswer[index] = sanitized;
     setAnswer(newAnswer.join(''));
-    
+
     if (sanitized && cellRefs.current[index + 1]) {
       cellRefs.current[index + 1]?.focus();
     }
@@ -83,6 +138,24 @@ export default function TasksPage() {
 
   const handleCheck = async () => {
     if (!task) return;
+
+    // Демо-режим: проверяем локально
+    if (isDemoMode) {
+      const demoTask = DEMO_TASKS[demoIndex];
+      const normalized = answer.trim().replace(',', '.');
+      const correct = demoTask.correctAnswer.trim().replace(',', '.');
+      setStatus('loading');
+      setTimeout(() => {
+        const isCorrect = normalized === correct;
+        setCheckResult({
+          is_correct: isCorrect,
+          short_feedback: isCorrect ? '✓ Верно!' : '✗ Неверно, попробуйте ещё раз',
+        } as CheckAnswerResponse);
+        setStatus(isCorrect ? 'success' : 'error');
+      }, 400);
+      return;
+    }
+
     aiAbortRef.current?.abort();
     const ctrl = new AbortController();
     aiAbortRef.current = ctrl;
@@ -97,17 +170,46 @@ export default function TasksPage() {
       setStatus(result.is_correct ? 'success' : 'error');
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
-      setStatus('error');
-      setErrorMessage(err instanceof ApiError ? err.message : 'Ошибка проверки');
+      // если бэк не ответил — проверяем локально по DEMO_TASKS, если задача оттуда
+      const demoTask = DEMO_TASKS.find((t) => t.id === task.id);
+      if (demoTask) {
+        const normalized = answer.trim().replace(',', '.');
+        const correct = demoTask.correctAnswer.trim().replace(',', '.');
+        const isCorrect = normalized === correct;
+        setCheckResult({
+          is_correct: isCorrect,
+          short_feedback: isCorrect ? '✓ Верно!' : '✗ Неверно, попробуйте ещё раз',
+        } as CheckAnswerResponse);
+        setStatus(isCorrect ? 'success' : 'error');
+        setIsDemoMode(true);
+      } else {
+        setStatus('error');
+        setErrorMessage(err instanceof ApiError ? err.message : 'Ошибка проверки');
+      }
     }
   };
 
   const handleNext = () => {
-    loadTask(activeMode);
+    if (isDemoMode) {
+      loadTask(activeMode, true);
+    } else {
+      loadTask(activeMode);
+    }
   };
 
   const handleHint = async () => {
     if (!task) return;
+
+    if (isDemoMode) {
+      setAiState('hint');
+      setAiLoading(true);
+      setTimeout(() => {
+        setHintText(DEMO_HINTS[task.id] ?? 'Подумай над условием ещё раз — ответ всегда внутри.');
+        setAiLoading(false);
+      }, 300);
+      return;
+    }
+
     aiAbortRef.current?.abort();
     const ctrl = new AbortController();
     aiAbortRef.current = ctrl;
@@ -119,8 +221,8 @@ export default function TasksPage() {
       setHintText(hint);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
-      setAiState('idle');
-      setErrorMessage(err instanceof ApiError ? err.message : 'Ошибка получения подсказки');
+      // fallback на демо-подсказку
+      setHintText(DEMO_HINTS[task.id] ?? 'Подумай над условием ещё раз — ответ всегда внутри.');
     } finally {
       setAiLoading(false);
     }
@@ -128,6 +230,22 @@ export default function TasksPage() {
 
   const handleExplain = async () => {
     if (!task) return;
+
+    if (isDemoMode) {
+      setAiState('explain');
+      setAiLoading(true);
+      setTimeout(() => {
+        setExplainData(
+          (DEMO_EXPLANATIONS[task.id] ?? {
+            explanation: 'Подробное решение скоро появится.',
+            steps: [],
+          }) as ExplainResponse,
+        );
+        setAiLoading(false);
+      }, 300);
+      return;
+    }
+
     aiAbortRef.current?.abort();
     const ctrl = new AbortController();
     aiAbortRef.current = ctrl;
@@ -139,8 +257,13 @@ export default function TasksPage() {
       setExplainData(data);
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') return;
-      setAiState('idle');
-      setErrorMessage(err instanceof ApiError ? err.message : 'Ошибка получения объяснения');
+      // fallback на демо-объяснение
+      setExplainData(
+        (DEMO_EXPLANATIONS[task.id] ?? {
+          explanation: 'Подробное решение скоро появится.',
+          steps: [],
+        }) as ExplainResponse,
+      );
     } finally {
       setAiLoading(false);
     }
@@ -203,9 +326,6 @@ export default function TasksPage() {
                   {checkResult?.short_feedback ?? '✗ Неверно, попробуйте ещё раз'}
                 </span>
               )}
-              {errorMessage && status === 'error' && (
-                <span className="status-message error">{errorMessage}</span>
-              )}
             </div>
 
             {aiState === 'hint' && (
@@ -240,8 +360,8 @@ export default function TasksPage() {
       </div>
 
       {/* Кнопка справочника */}
-      <button 
-        className="reference-toggle" 
+      <button
+        className="reference-toggle"
         onClick={() => setIsRefOpen(!isRefOpen)}
         aria-label="Открыть справочник"
       >
@@ -251,8 +371,8 @@ export default function TasksPage() {
       {/* Панель справочника */}
       {isRefOpen && (
         <div className="reference-panel">
-          <button 
-            className="reference-close" 
+          <button
+            className="reference-close"
             onClick={() => setIsRefOpen(false)}
             aria-label="Закрыть справочник"
           >
