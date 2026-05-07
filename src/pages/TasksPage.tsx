@@ -1,48 +1,74 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './TasksPage.css';
-
-interface Task {
-  id: number;
-  question: string;
-  correctAnswer: string;
-  formatHint: string;
-}
+import {
+  type Task,
+  type CheckAnswerResponse,
+  type ExplainResponse,
+  tasksApi,
+  ApiError,
+  clearAuthToken,
+} from '../api/tasks';
 
 type TaskStatus = 'idle' | 'loading' | 'success' | 'error';
-type AiState = 'idle' | 'hint' | 'explain' | 'chat';
+type AiState = 'idle' | 'hint' | 'explain';
 
 export default function TasksPage() {
-  const tasks: Task[] = [
-  {
-    id: 1,
-    question: "Решите уравнение: 3x + 7 = 22",
-    correctAnswer: "5",
-    formatHint: "Введите число",
-  },
-  {
-    id: 2,
-    question: "Найдите значение выражения: 12 + 8 · 2",
-    correctAnswer: "28",
-    formatHint: "Введите число",
-  },
-  {
-    id: 3,
-    question: "Найдите 20% от числа 150",
-    correctAnswer: "30",
-    formatHint: "Введите число",
-  },
-];
-
-const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
-const task = tasks[currentTaskIndex];
-  
-  const [answer, setAnswer] = useState<string>('');
+  const [task, setTask] = useState<Task | null>(null);
+  const [taskLoading, setTaskLoading] = useState(true);
+  const [answer, setAnswer] = useState('');
   const [status, setStatus] = useState<TaskStatus>('idle');
+  const [checkResult, setCheckResult] = useState<CheckAnswerResponse | null>(null);
   const [aiState, setAiState] = useState<AiState>('idle');
-  const [activeMode, setActiveMode] = useState<string>('all');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [hintText, setHintText] = useState<string | null>(null);
+  const [explainData, setExplainData] = useState<ExplainResponse | null>(null);
+  const [activeMode, setActiveMode] = useState<'weak' | 'all' | 'custom'>('all');
   const [isRefOpen, setIsRefOpen] = useState(false);
-  
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const taskAbortRef = useRef<AbortController | null>(null);
+  const aiAbortRef = useRef<AbortController | null>(null);
   const cellRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const loadTask = async (mode: 'weak' | 'all' | 'custom') => {
+    taskAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    taskAbortRef.current = ctrl;
+
+    setTaskLoading(true);
+    setAnswer('');
+    setStatus('idle');
+    setAiState('idle');
+    setHintText(null);
+    setExplainData(null);
+    setCheckResult(null);
+    setErrorMessage(null);
+
+    try {
+      const req =
+        mode === 'custom'
+          ? ({ mode: 'custom', oge_number: 6, subtype_code: '' } as const)
+          : ({ mode } as const);
+      const newTask = await tasksApi.generate(req, { signal: ctrl.signal });
+      setTask(newTask);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      if (err instanceof ApiError && err.isAuthError) {
+        clearAuthToken();
+        window.location.href = '/login';
+        return;
+      }
+      setErrorMessage(err instanceof ApiError ? err.message : 'Ошибка загрузки задания');
+    } finally {
+      setTaskLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadTask(activeMode); // async fetch — setState вызывается только после await
+    return () => { taskAbortRef.current?.abort(); };
+  }, [activeMode]);
 
   const handleCellChange = (value: string, index: number) => {
     const sanitized = value.replace(/[^0-9,-]/g, '');
@@ -55,28 +81,70 @@ const task = tasks[currentTaskIndex];
     }
   };
 
-  const handleCheck = () => {
-  const normalizedAnswer = answer.trim().replace(",", ".");
-  const normalizedCorrectAnswer = task.correctAnswer.trim().replace(",", ".");
+  const handleCheck = async () => {
+    if (!task) return;
+    aiAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    aiAbortRef.current = ctrl;
 
-  setStatus("loading");
+    setStatus('loading');
+    try {
+      const result = await tasksApi.check(
+        { task_id: task.id, student_answer: answer },
+        { signal: ctrl.signal },
+      );
+      setCheckResult(result);
+      setStatus(result.is_correct ? 'success' : 'error');
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      setStatus('error');
+      setErrorMessage(err instanceof ApiError ? err.message : 'Ошибка проверки');
+    }
+  };
 
-  setTimeout(() => {
-    setStatus(
-      normalizedAnswer === normalizedCorrectAnswer ? "success" : "error"
-    );
-  }, 600);
-};
+  const handleNext = () => {
+    loadTask(activeMode);
+  };
 
- const handleNext = () => {
-  setAnswer("");
-  setStatus("idle");
-  setAiState("idle");
+  const handleHint = async () => {
+    if (!task) return;
+    aiAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    aiAbortRef.current = ctrl;
 
-  setCurrentTaskIndex((prevIndex) =>
-    prevIndex === tasks.length - 1 ? 0 : prevIndex + 1
-  );
-};
+    setAiState('hint');
+    setAiLoading(true);
+    try {
+      const { hint } = await tasksApi.hint({ task_id: task.id }, { signal: ctrl.signal });
+      setHintText(hint);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      setAiState('idle');
+      setErrorMessage(err instanceof ApiError ? err.message : 'Ошибка получения подсказки');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleExplain = async () => {
+    if (!task) return;
+    aiAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    aiAbortRef.current = ctrl;
+
+    setAiState('explain');
+    setAiLoading(true);
+    try {
+      const data = await tasksApi.explain({ task_id: task.id }, { signal: ctrl.signal });
+      setExplainData(data);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      setAiState('idle');
+      setErrorMessage(err instanceof ApiError ? err.message : 'Ошибка получения объяснения');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   return (
     <div className="tasks-page">
@@ -90,55 +158,85 @@ const task = tasks[currentTaskIndex];
       </header>
 
       <div className="task-card">
-        <h2 className="task-condition">{task.question}</h2>
-        <p className="task-hint">{task.formatHint}</p>
+        {taskLoading ? (
+          <p className="task-condition">Загрузка задания…</p>
+        ) : errorMessage && !task ? (
+          <p className="status-message error">{errorMessage}</p>
+        ) : task ? (
+          <>
+            <h2 className="task-condition">{task.question}</h2>
 
-        <div className="answer-section">
-          <div className="cell-input-container">
-            {Array.from({ length: Math.max(answer.length, task.correctAnswer.length) || 3 }).map((_, index) => (
-              <input
-                key={index}
-                ref={(el: HTMLInputElement | null) => { cellRefs.current[index] = el; }}
-                className="cell-input"
-                type="text"
-                value={answer[index] || ''}
-                onChange={(e) => handleCellChange(e.target.value, index)}
-                maxLength={1}
-              />
-            ))}
-          </div>
+            <div className="answer-section">
+              <div className="cell-input-container">
+                {Array.from({ length: Math.max(answer.length, 1) || 3 }).map((_, index) => (
+                  <input
+                    key={index}
+                    ref={(el: HTMLInputElement | null) => { cellRefs.current[index] = el; }}
+                    className="cell-input"
+                    type="text"
+                    value={answer[index] || ''}
+                    onChange={(e) => handleCellChange(e.target.value, index)}
+                    maxLength={1}
+                    disabled={status === 'loading'}
+                  />
+                ))}
+              </div>
 
-          {status === 'success' && (
-            <button className="action-button" onClick={handleNext}>Следующее задание</button>
-          )}
-          {status === 'error' && (
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button className="action-button secondary-button" onClick={() => setAiState('hint')}>Подсказка</button>
-              <button className="action-button" onClick={handleCheck}>Проверить ещё раз</button>
+              {status === 'success' && (
+                <button className="action-button" onClick={handleNext}>Следующее задание</button>
+              )}
+              {status === 'error' && (
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <button className="action-button secondary-button" onClick={handleHint}>Подсказка</button>
+                  <button className="action-button" onClick={handleCheck}>Проверить ещё раз</button>
+                </div>
+              )}
+              {(status === 'idle' || status === 'loading') && (
+                <button className="action-button" onClick={handleCheck} disabled={status === 'loading' || !answer.trim()}>
+                  {status === 'loading' ? 'Проверяем…' : 'Проверить'}
+                </button>
+              )}
+
+              {status === 'success' && <span className="status-message success">✓ Верно!</span>}
+              {status === 'error' && (
+                <span className="status-message error">
+                  {checkResult?.short_feedback ?? '✗ Неверно, попробуйте ещё раз'}
+                </span>
+              )}
+              {errorMessage && status === 'error' && (
+                <span className="status-message error">{errorMessage}</span>
+              )}
             </div>
-          )}
-          {status === 'idle' && (
-            <button className="action-button" onClick={handleCheck} disabled={!answer.trim()}>Проверить</button>
-          )}
 
-          {status === 'success' && <span className="status-message success">✓ Верно!</span>}
-          {status === 'error' && <span className="status-message error">✗ Неверно, попробуйте ещё раз</span>}
-        </div>
+            {aiState === 'hint' && (
+              <div className="help-section">
+                <h3 className="help-title">💡 Подсказка</h3>
+                <p className="help-content">
+                  {aiLoading ? 'Загрузка…' : hintText}
+                </p>
+                {!aiLoading && (
+                  <button className="action-button secondary-button" style={{ marginTop: '12px' }} onClick={handleExplain}>Показать решение</button>
+                )}
+              </div>
+            )}
 
-        {aiState === 'hint' && (
-          <div className="help-section">
-            <h3 className="help-title">💡 Подсказка</h3>
-            <p className="help-content">Перенесите известное слагаемое в правую часть, изменив знак.</p>
-            <button className="action-button secondary-button" style={{ marginTop: '12px' }} onClick={() => setAiState('explain')}>Показать решение</button>
-          </div>
-        )}
-
-        {aiState === 'explain' && (
-          <div className="help-section">
-            <h3 className="help-title">📖 Объяснение</h3>
-            <p className="help-content">1. 3x = 22 - 7<br/>2. 3x = 15<br/>3. x = 5</p>
-          </div>
-        )}
+            {aiState === 'explain' && (
+              <div className="help-section">
+                <h3 className="help-title">📖 Объяснение</h3>
+                {aiLoading ? (
+                  <p className="help-content">Загрузка…</p>
+                ) : explainData ? (
+                  <>
+                    <p className="help-content">{explainData.explanation}</p>
+                    <ol className="help-content">
+                      {explainData.steps.map((step, i) => <li key={i}>{step}</li>)}
+                    </ol>
+                  </>
+                ) : null}
+              </div>
+            )}
+          </>
+        ) : null}
       </div>
 
       {/* Кнопка справочника */}
