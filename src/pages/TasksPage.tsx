@@ -65,7 +65,8 @@ export default function TasksPage() {
   };
 
   useEffect(() => {
-    loadTask(activeMode);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadTask(activeMode); // async fetch — setState вызывается только после await
     return () => { taskAbortRef.current?.abort(); };
   }, [activeMode]);
 
