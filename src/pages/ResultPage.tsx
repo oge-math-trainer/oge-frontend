@@ -1,5 +1,5 @@
 import "./ResultPage.css";
-
+import { Link } from "react-router-dom";
 type ResultPageProps = {
   answers: { taskId: number; answer: string }[];
   onRestart: () => void;
@@ -18,6 +18,9 @@ export function ResultPage({ answers, onRestart }: ResultPageProps) {
         <button type="button" onClick={onRestart}>
           Пройти диагностику заново
         </button>
+        <Link className="result-profile-link" to="/profile">
+  Перейти в профиль
+</Link>
       </section>
     </main>
   );

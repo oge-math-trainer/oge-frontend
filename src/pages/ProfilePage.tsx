@@ -1,5 +1,5 @@
 import "./ProfilePage.css";
-
+import { Link } from "react-router-dom";
 const weakTopics = [
   { title: "Уравнения", progress: 35 },
   { title: "Проценты", progress: 45 },
@@ -56,7 +56,9 @@ export function ProfilePage() {
           ))}
         </div>
 
-        <button>Продолжить тренировку</button>
+        <Link className="profile-training-link" to="/tasks">
+  Продолжить тренировку
+</Link>
       </section>
     </main>
   );

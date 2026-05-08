@@ -261,3 +261,197 @@
   transform: scale(1.05);
   box-shadow: 0 6px 16px rgba(111, 121, 251, 0.5);
 }
+
+.task-input {
+  width: 100%;
+  max-width: 420px;
+
+  padding: 16px 20px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  font-size: 16px;
+  color: #111827;
+
+  outline: none;
+
+  transition: 0.2s;
+}
+
+.task-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.answer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+
+  margin-top: 32px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ai-badge {
+  display: inline-flex;
+  align-self: center;
+  margin-bottom: 18px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.task-input {
+  width: 100%;
+  max-width: 420px;
+  padding: 16px 20px;
+  border: 1px solid #d1d5db;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 16px;
+  outline: none;
+}
+
+.task-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.answer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  margin-top: 32px;
+}
+
+.task-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ai-panel {
+  margin-top: 24px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #f9fafb;
+  color: #374151;
+  text-align: left;
+}
+
+.ai-panel h3 {
+  margin: 0 0 8px;
+  color: #111827;
+  font-size: 18px;
+}
+
+.ai-panel p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ai-panel ol {
+  margin: 0;
+  padding-left: 22px;
+  line-height: 1.7;
+}
+
+.hint-panel {
+  border-left: 4px solid #f59e0b;
+}
+
+.explain-panel {
+  border-left: 4px solid #4f46e5;
+}
+
+.action-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.explain-button {
+  margin-top: 10px;
+
+  min-width: 220px;
+
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+@media (max-width: 768px) {
+  .home-card,
+  .login-card,
+  .dashboard-card,
+  .diagnostic-card,
+  .result-card,
+  .profile-card,
+  .task-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 24px;
+    border-radius: 20px;
+  }
+
+  .home-page,
+  .login-page,
+  .dashboard-page,
+  .diagnostic-page,
+  .result-page,
+  .profile-page,
+  .tasks-page {
+    padding: 16px;
+  }
+
+  h1,
+  .tasks-title {
+    font-size: 28px;
+  }
+
+  .task-question,
+  .task-condition {
+    font-size: 22px;
+    line-height: 1.35;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-actions,
+  .task-actions,
+  .result-actions {
+    flex-direction: column;
+  }
+
+  .dashboard-primary-link,
+  .dashboard-secondary-link,
+  .dashboard-logout-button,
+  .result-profile-link,
+  .profile-training-link,
+  .action-button {
+    width: 100%;
+  }
+
+  .home-card h1,
+  .login-card h1,
+  .profile-card h1,
+  .result-card h1,
+  .diagnostic-card h1,
+  .tasks-title {
+    font-size: 24px;
+  }
+}
