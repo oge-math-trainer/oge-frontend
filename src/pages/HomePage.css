@@ -96,3 +96,65 @@
     font-size: 28px;
   }
 }
+
+@media (max-width: 768px) {
+  .home-card,
+  .login-card,
+  .dashboard-card,
+  .diagnostic-card,
+  .result-card,
+  .profile-card,
+  .task-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 24px;
+    border-radius: 20px;
+  }
+
+  .home-page,
+  .login-page,
+  .dashboard-page,
+  .diagnostic-page,
+  .result-page,
+  .profile-page,
+  .tasks-page {
+    padding: 16px;
+  }
+
+  h1,
+  .tasks-title {
+    font-size: 28px;
+  }
+
+  .task-question,
+  .task-condition {
+    font-size: 22px;
+    line-height: 1.35;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-actions,
+  .task-actions,
+  .result-actions {
+    flex-direction: column;
+  }
+
+  .dashboard-primary-link,
+  .dashboard-secondary-link,
+  .dashboard-logout-button,
+  .result-profile-link,
+  .profile-training-link,
+  .action-button {
+    width: 100%;
+  }
+
+  .home-card h1,
+  .login-card h1,
+  .profile-card h1,
+  .result-card h1,
+  .diagnostic-card h1,
+  .tasks-title {
+    font-size: 24px;
+  }
+}

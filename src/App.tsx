@@ -7,12 +7,12 @@ import {
   useNavigate,
 } from "react-router-dom";
 
+import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import TasksPage from "./pages/TasksPage";
 import { DiagnosticPage } from "./pages/DiagnosticPage";
 import { ResultPage } from "./pages/ResultPage";
-import { HomePage } from "./pages/HomePage";
 import { ProfilePage } from "./pages/ProfilePage";
 
 type DiagnosticAnswer = {
@@ -21,8 +21,13 @@ type DiagnosticAnswer = {
 };
 
 function AppRoutes() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [diagnosticAnswers, setDiagnosticAnswers] = useState<DiagnosticAnswer[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    Boolean(localStorage.getItem("auth_token"))
+  );
+  const [diagnosticAnswers, setDiagnosticAnswers] = useState<DiagnosticAnswer[]>(
+    []
+  );
+
   const navigate = useNavigate();
 
   function handleLoginSuccess() {
@@ -31,7 +36,10 @@ function AppRoutes() {
   }
 
   function handleLogout() {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_email");
     setIsLoggedIn(false);
+    setDiagnosticAnswers([]);
     navigate("/login");
   }
 
@@ -77,7 +85,10 @@ function AppRoutes() {
           isLoggedIn ? (
             <ResultPage
               answers={diagnosticAnswers}
-              onRestart={() => navigate("/diagnostic")}
+              onRestart={() => {
+                setDiagnosticAnswers([]);
+                navigate("/diagnostic");
+              }}
             />
           ) : (
             <Navigate to="/login" replace />
@@ -94,6 +105,8 @@ function AppRoutes() {
         path="/tasks"
         element={isLoggedIn ? <TasksPage /> : <Navigate to="/login" replace />}
       />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

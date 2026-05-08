@@ -13,7 +13,8 @@
  *    (см. документ «Суть MVP», раздел «Почему убрали свободный чат»).
  */
 
-const API_BASE: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
+const API_BASE: string = "http://localhost:8080";
+
 const API_PREFIX = '/api/v1';
 
 // ────────────────────────────────────────────────────────────
