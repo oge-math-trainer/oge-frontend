@@ -14,6 +14,7 @@ import TasksPage from "./pages/TasksPage";
 import { DiagnosticPage } from "./pages/DiagnosticPage";
 import { ResultPage } from "./pages/ResultPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { RegisterPage } from "./pages/RegisterPage";
 
 type DiagnosticAnswer = {
   taskId: number;
@@ -52,6 +53,14 @@ function AppRoutes() {
         element={<LoginPage onLoginSuccess={handleLoginSuccess} />}
       />
 
+    <Route
+        path="/register"
+         element={
+    <RegisterPage
+      onRegisterSuccess={handleLoginSuccess}
+    />
+    }
+/>
       <Route
         path="/dashboard"
         element={

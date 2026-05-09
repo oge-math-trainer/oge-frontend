@@ -6,49 +6,16 @@ const diagnosticTasks = [
   { id: 2, ogeNumber: 7, question: "Решите уравнение: x + 15 = 27" },
   { id: 3, ogeNumber: 8, question: "Найдите 20% от числа 150" },
   { id: 4, ogeNumber: 9, question: "Решите уравнение: 3x = 24" },
-  {
-    id: 5,
-    ogeNumber: 10,
-    question: "Найдите вероятность выпадения чётного числа на кубике",
-  },
-  {
-    id: 6,
-    ogeNumber: 11,
-    question: "Функция задана формулой y = 2x + 1. Найдите y при x = 4",
-  },
-  {
-    id: 7,
-    ogeNumber: 12,
-    question: "Найдите площадь прямоугольника со сторонами 6 и 9",
-  },
+  { id: 5, ogeNumber: 10, question: "Найдите вероятность выпадения чётного числа на кубике" },
+  { id: 6, ogeNumber: 11, question: "Функция задана формулой y = 2x + 1. Найдите y при x = 4" },
+  { id: 7, ogeNumber: 12, question: "Найдите площадь прямоугольника со сторонами 6 и 9" },
   { id: 8, ogeNumber: 13, question: "Решите неравенство: x - 5 > 3" },
-  {
-    id: 9,
-    ogeNumber: 14,
-    question: "Найдите сумму первых пяти натуральных чисел",
-  },
-  {
-    id: 10,
-    ogeNumber: 15,
-    question: "Найдите периметр квадрата со стороной 7",
-  },
-  {
-    id: 11,
-    ogeNumber: 16,
-    question:
-      "Найдите гипотенузу прямоугольного треугольника с катетами 3 и 4",
-  },
-  {
-    id: 12,
-    ogeNumber: 17,
-    question: "Найдите среднее арифметическое чисел 4, 8 и 12",
-  },
+  { id: 9, ogeNumber: 14, question: "Найдите сумму первых пяти натуральных чисел" },
+  { id: 10, ogeNumber: 15, question: "Найдите периметр квадрата со стороной 7" },
+  { id: 11, ogeNumber: 16, question: "Найдите гипотенузу прямоугольного треугольника с катетами 3 и 4" },
+  { id: 12, ogeNumber: 17, question: "Найдите среднее арифметическое чисел 4, 8 и 12" },
   { id: 13, ogeNumber: 18, question: "Сколько градусов в развёрнутом угле?" },
-  {
-    id: 14,
-    ogeNumber: 19,
-    question: "Найдите значение выражения: 5² - 10",
-  },
+  { id: 14, ogeNumber: 19, question: "Найдите значение выражения: 5² - 10" },
 ];
 
 type DiagnosticAnswer = {
@@ -64,6 +31,7 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [answers, setAnswers] = useState<DiagnosticAnswer[]>([]);
+  const [showFinishModal, setShowFinishModal] = useState(false);
 
   const currentTask = diagnosticTasks[currentIndex];
   const isLastTask = currentIndex === diagnosticTasks.length - 1;
@@ -74,9 +42,7 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
       answer,
     };
 
-    const answerExists = answers.some(
-      (item) => item.taskId === currentTask.id
-    );
+    const answerExists = answers.some((item) => item.taskId === currentTask.id);
 
     if (answerExists) {
       return answers.map((item) =>
@@ -104,7 +70,7 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
     const updatedAnswers = saveCurrentAnswer();
 
     if (isLastTask) {
-      onFinish(updatedAnswers);
+      setShowFinishModal(true);
       return;
     }
 
@@ -114,6 +80,15 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
     setAnswer(getSavedAnswer(nextTask.id, updatedAnswers));
     setCurrentIndex(currentIndex + 1);
   }
+
+  function handleConfirmFinish() {
+    const updatedAnswers = saveCurrentAnswer();
+    onFinish(updatedAnswers);
+  }
+
+  const savedAnswers = saveCurrentAnswer();
+  const answeredCount = savedAnswers.filter((item) => item.answer.trim()).length;
+  const hasUnansweredTasks = answeredCount < diagnosticTasks.length;
 
   return (
     <main className="diagnostic-page">
@@ -173,6 +148,42 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
           {isLastTask ? "Завершить диагностику" : "Следующее задание"}
         </button>
       </section>
+
+      {showFinishModal && (
+        <div className="modal-overlay">
+          <div className="finish-modal">
+            <h3>
+              {hasUnansweredTasks
+                ? "У тебя есть нерешённые задания"
+                : "Завершить диагностику?"}
+            </h3>
+
+            <p>
+              {hasUnansweredTasks
+                ? "Ты действительно хочешь завершить диагностику? Нерешённые задания не будут учитываться."
+                : "После завершения ты перейдёшь к результату диагностики."}
+            </p>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="modal-secondary-button"
+                onClick={() => setShowFinishModal(false)}
+              >
+                Продолжить решать
+              </button>
+
+              <button
+                type="button"
+                className="modal-primary-button"
+                onClick={handleConfirmFinish}
+              >
+                Завершить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
