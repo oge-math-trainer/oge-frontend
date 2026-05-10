@@ -1,22 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  startDiagnostic,
+  submitDiagnostic,
+  type DiagnosticTask,
+} from "../api/diagnostic";
 import "./DiagnosticPage.css";
-
-const diagnosticTasks = [
-  { id: 1, ogeNumber: 6, question: "Найдите значение выражения: 12 + 8 · 2" },
-  { id: 2, ogeNumber: 7, question: "Решите уравнение: x + 15 = 27" },
-  { id: 3, ogeNumber: 8, question: "Найдите 20% от числа 150" },
-  { id: 4, ogeNumber: 9, question: "Решите уравнение: 3x = 24" },
-  { id: 5, ogeNumber: 10, question: "Найдите вероятность выпадения чётного числа на кубике" },
-  { id: 6, ogeNumber: 11, question: "Функция задана формулой y = 2x + 1. Найдите y при x = 4" },
-  { id: 7, ogeNumber: 12, question: "Найдите площадь прямоугольника со сторонами 6 и 9" },
-  { id: 8, ogeNumber: 13, question: "Решите неравенство: x - 5 > 3" },
-  { id: 9, ogeNumber: 14, question: "Найдите сумму первых пяти натуральных чисел" },
-  { id: 10, ogeNumber: 15, question: "Найдите периметр квадрата со стороной 7" },
-  { id: 11, ogeNumber: 16, question: "Найдите гипотенузу прямоугольного треугольника с катетами 3 и 4" },
-  { id: 12, ogeNumber: 17, question: "Найдите среднее арифметическое чисел 4, 8 и 12" },
-  { id: 13, ogeNumber: 18, question: "Сколько градусов в развёрнутом угле?" },
-  { id: 14, ogeNumber: 19, question: "Найдите значение выражения: 5² - 10" },
-];
 
 type DiagnosticAnswer = {
   taskId: number;
@@ -28,15 +16,51 @@ type DiagnosticPageProps = {
 };
 
 export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
+  const [sessionId, setSessionId] = useState<number | null>(null);
+  const [diagnosticTasks, setDiagnosticTasks] = useState<DiagnosticTask[]>([]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [answers, setAnswers] = useState<DiagnosticAnswer[]>([]);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
   const [showFinishModal, setShowFinishModal] = useState(false);
 
   const currentTask = diagnosticTasks[currentIndex];
   const isLastTask = currentIndex === diagnosticTasks.length - 1;
 
+  async function loadDiagnostic() {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const data = await startDiagnostic();
+
+      setSessionId(data.session_id);
+      setDiagnosticTasks(data.tasks);
+      setCurrentIndex(0);
+      setAnswer("");
+      setAnswers([]);
+    } catch (err) {
+      console.error("Start diagnostic error:", err);
+      setError("Не удалось загрузить диагностику. Возможно, AI-сервис временно недоступен.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadDiagnostic();
+  }, []);
+
   function saveCurrentAnswer() {
+    if (!currentTask) {
+      return answers;
+    }
+
     const currentAnswer = {
       taskId: currentTask.id,
       answer,
@@ -70,6 +94,7 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
     const updatedAnswers = saveCurrentAnswer();
 
     if (isLastTask) {
+      setAnswers(updatedAnswers);
       setShowFinishModal(true);
       return;
     }
@@ -81,10 +106,60 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
     setCurrentIndex(currentIndex + 1);
   }
 
-  function handleConfirmFinish() {
+  async function handleConfirmFinish() {
+    if (!sessionId) return;
+
     const updatedAnswers = saveCurrentAnswer();
-    onFinish(updatedAnswers);
+
+    const preparedAnswers = updatedAnswers
+      .filter((item) => item.answer.trim())
+      .map((item) => ({
+        task_id: item.taskId,
+        student_answer: item.answer,
+      }));
+
+    setIsSubmitting(true);
+
+    try {
+      await submitDiagnostic(sessionId, preparedAnswers);
+      onFinish(updatedAnswers);
+    } catch (err) {
+      console.error("Submit diagnostic error:", err);
+      setError("Не удалось завершить диагностику. Попробуй ещё раз.");
+      setShowFinishModal(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
+
+  if (isLoading) {
+    return (
+      <main className="diagnostic-page">
+        <section className="diagnostic-card">
+          <p className="diagnostic-label">Диагностика</p>
+          <h1>ИИ готовит задания...</h1>
+        </section>
+      </main>
+    );
+  }
+
+  if (error && diagnosticTasks.length === 0) {
+    return (
+      <main className="diagnostic-page">
+        <section className="diagnostic-card">
+          <p className="diagnostic-label">Диагностика</p>
+          <h1>Не удалось загрузить диагностику</h1>
+          <p className="diagnostic-error">{error}</p>
+
+          <button type="button" onClick={loadDiagnostic}>
+            Попробовать снова
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  if (!currentTask) return null;
 
   const savedAnswers = saveCurrentAnswer();
   const answeredCount = savedAnswers.filter((item) => item.answer.trim()).length;
@@ -120,9 +195,9 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
               <button
                 key={task.id}
                 type="button"
-                className={`diagnostic-nav-button ${
-                  isActive ? "active" : ""
-                } ${isAnswered ? "answered" : ""}`}
+                className={`diagnostic-nav-button ${isActive ? "active" : ""} ${
+                  isAnswered ? "answered" : ""
+                }`}
                 onClick={() => goToTask(index)}
               >
                 {index + 1}
@@ -131,7 +206,9 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
           })}
         </div>
 
-        <p className="task-number">Задание №{currentTask.ogeNumber}</p>
+        {error && <p className="diagnostic-error">{error}</p>}
+
+        <p className="task-number">Задание №{currentTask.oge_number}</p>
 
         <div className="task-question">{currentTask.question}</div>
 
@@ -144,7 +221,7 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
           />
         </label>
 
-        <button type="button" onClick={handleNext} disabled={!answer.trim()}>
+        <button type="button" onClick={handleNext}>
           {isLastTask ? "Завершить диагностику" : "Следующее задание"}
         </button>
       </section>
@@ -169,6 +246,7 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
                 type="button"
                 className="modal-secondary-button"
                 onClick={() => setShowFinishModal(false)}
+                disabled={isSubmitting}
               >
                 Продолжить решать
               </button>
@@ -177,8 +255,9 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
                 type="button"
                 className="modal-primary-button"
                 onClick={handleConfirmFinish}
+                disabled={isSubmitting}
               >
-                Завершить
+                {isSubmitting ? "Завершаем..." : "Завершить"}
               </button>
             </div>
           </div>
