@@ -1,45 +1,72 @@
-export async function login(email: string, password: string) {
-  await new Promise((resolve) => setTimeout(resolve, 500));
+import {
+  apiGet,
+  apiPost,
+} from "./client";
 
-  if (email === "test@test.com" && password === "1234") {
-    localStorage.setItem("auth_token", "mock-token");
-    localStorage.setItem("user_email", email);
+type User = {
+  id: number;
+  email: string;
+};
 
-    return {
-      token: "mock-token",
-      user: {
-        id: 1,
+type AuthResponse = {
+  token: string;
+  user: User;
+};
+
+export async function login(
+  email: string,
+  password: string
+) {
+  const data =
+    await apiPost<AuthResponse>(
+      "/api/v1/auth/login",
+      {
         email,
-      },
-    };
-  }
+        password,
+      }
+    );
 
-  throw new Error("Login failed");
+  localStorage.setItem(
+    "auth_token",
+    data.token
+  );
+
+  localStorage.setItem(
+    "user_email",
+    data.user.email
+  );
+
+  return data;
 }
 
+export async function register(
+  email: string,
+  password: string
+) {
+  const data =
+    await apiPost<AuthResponse>(
+      "/api/v1/auth/register",
+      {
+        email,
+        password,
+      }
+    );
 
+  localStorage.setItem(
+    "auth_token",
+    data.token
+  );
 
-export async function register(name: string, email: string, password: string) {
-  void password;
+  localStorage.setItem(
+    "user_email",
+    data.user.email
+  );
 
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  localStorage.setItem("auth_token", "mock-token");
-  localStorage.setItem("user_email", email);
-  localStorage.setItem("user_name", name);
-
-  return {
-    token: "mock-token",
-    user: {
-      id: 1,
-      name,
-      email,
-    },
-  };
+  return data;
 }
 
-export function logout() {
-  localStorage.removeItem("auth_token");
-  localStorage.removeItem("user_email");
-  localStorage.removeItem("user_name");
+export async function me() {
+  return apiGet<User>(
+    "/api/v1/auth/me"
+  );
 }
