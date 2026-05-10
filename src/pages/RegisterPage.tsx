@@ -28,7 +28,7 @@ export function RegisterPage({ onRegisterSuccess }: RegisterPageProps) {
     setIsLoading(true);
 
     try {
-      await register(name, email, password);
+      await register(email, password);
       onRegisterSuccess();
     } catch {
       setError("Не удалось зарегистрироваться");
