@@ -1,5 +1,15 @@
 import { apiPost } from "./client";
 
+export type GraphData = {
+  id: string;
+  type: "linear" | "quadratic" | "hyperbola";
+  coefficients: number[];
+  x_min: number;
+  x_max: number;
+  y_min: number;
+  y_max: number;
+};
+
 export type GeneratedTask = {
   id: number;
   mode: string;
@@ -7,6 +17,10 @@ export type GeneratedTask = {
   subtype_code?: string;
   question: string;
   source?: string;
+  created_at?: string;
+
+  graphs?: GraphData[];
+  graph_data?: GraphData[];
 };
 
 export type CheckAnswerResponse = {
@@ -24,12 +38,16 @@ export type ExplainResponse = {
   steps: string[];
 };
 
-export function generateTask(
-  request:
-    | { mode: "all" }
-    | { mode: "weak" }
-    | { mode: "custom"; oge_number: number; subtype_code: string }
-) {
+export type GenerateTaskRequest =
+  | { mode: "all" }
+  | { mode: "weak" }
+  | {
+      mode: "custom";
+      oge_number: number;
+      subtype_code: string;
+    };
+
+export function generateTask(request: GenerateTaskRequest) {
   return apiPost<GeneratedTask>("/api/v1/tasks/generate", request);
 }
 

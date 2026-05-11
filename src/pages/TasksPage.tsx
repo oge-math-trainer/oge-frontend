@@ -466,15 +466,11 @@ export default function TasksPage() {
               {current.task.question}
             </h2>
 
-            {current.task.graphs &&
-              current.task.graphs.length >
-                0 && (
-                <FunctionGraphs
-                  graphs={
-                    current.task.graphs
-                  }
-                />
-              )}
+            {((current.task.graphs ?? current.task.graph_data)?.length ?? 0) > 0 && (
+  <FunctionGraphs
+    graphs={current.task.graphs ?? current.task.graph_data ?? []}
+  />
+)}
 
             <div className="answer-section">
               <input
