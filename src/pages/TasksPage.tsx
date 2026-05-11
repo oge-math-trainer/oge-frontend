@@ -108,6 +108,16 @@ export default function TasksPage() {
 
   const current = history[currentIndex];
 
+  // Сброс состояния при переключении режима, чтобы задачи и история одного режима
+  // не «протекали» в другой
+  function switchMode(newMode: TrainingMode) {
+    if (newMode === mode) return;
+    setMode(newMode);
+    setHistory([]);
+    setCurrentIndex(0);
+    setPageError("");
+  }
+
   async function loadRecommendations() {
     setIsRecommendationsLoading(true);
     setPageError("");

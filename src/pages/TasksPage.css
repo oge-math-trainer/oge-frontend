@@ -1,14 +1,16 @@
+/* ===== Базовая раскладка страницы ===== */
 .tasks-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 40px 24px;
-  background: #f9fafb;
-  color: #1f2937; /* Тёмный текст */
+  background: #f6f7fb;
+  color: #1f2937;
   font-family: system-ui, -apple-system, sans-serif;
 }
 
+/* ===== Шапка ===== */
 .tasks-header {
   width: 100%;
   max-width: 800px;
@@ -19,55 +21,65 @@
 .tasks-title {
   font-size: 32px;
   font-weight: 700;
-  color: #1f2937; /* ЧЁРНЫЙ заголовок */
+  color: #1f2937;
   margin: 0 0 24px 0;
+  line-height: 1.2;
 }
 
+/* ===== Селектор режима (Слабые темы / Все задания / Выбрать) ===== */
 .mode-selector {
   display: flex;
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
+  padding: 0 8px;
 }
 
 .mode-button {
-  padding: 12px 24px;
-  border: none;
+  flex: 0 0 auto;
+  padding: 12px 22px;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
-  background: #e5e7eb;
-  color: #374151; /* Тёмный текст кнопок */
+  background: #ffffff;
+  color: #374151;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .mode-button:hover {
-  background: #d1d5db;
+  border-color: #c7d2fe;
+  background: #f9fafb;
 }
 
 .mode-button.active {
-  background: #6f79fb;
+  background: #4f46e5;
   color: #ffffff;
+  border-color: #4f46e5;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
 }
 
+/* ===== Карточка ===== */
 .task-card {
   width: 100%;
   max-width: 800px;
-  padding: 48px 40px;
+  padding: 40px 36px;
   border-radius: 20px;
   background: #ffffff;
-  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 20px;
 }
 
+/* ===== Условие задачи ===== */
 .task-condition {
   font-size: 22px;
   font-weight: 600;
-  color: #1f2937; /* ЧЁРНЫЙ текст условия */
+  color: #1f2937;
   line-height: 1.5;
   margin: 0;
   text-align: center;
@@ -75,99 +87,138 @@
 
 .task-hint {
   font-size: 14px;
-  color: #6b7280; /* Серый, но видимый */
+  color: #6b7280;
   margin: 0;
 }
 
+/* ===== Бейдж «Задание от ИИ» ===== */
+.ai-badge {
+  display: inline-flex;
+  align-self: center;
+  margin-bottom: 4px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ===== Селектор типа задания (мод «Выбрать») ===== */
+.task-type-selector {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.task-type-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.task-type-selector select {
+  width: 360px;
+  max-width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 15px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.task-type-selector select:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* ===== Поле ввода ответа ===== */
 .answer-section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   width: 100%;
 }
 
-.cell-input-container {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.cell-input {
-  width: 56px;
-  height: 64px;
-  font-size: 28px;
-  font-weight: 600;
-  text-align: center;
-  border: 2px solid #d1d5db;
+.task-input {
+  width: 100%;
+  max-width: 420px;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
   border-radius: 12px;
   background: #ffffff;
-  color: #1f2937; /* ЧЁРНЫЙ текст в ячейке */
-  transition: all 0.2s ease;
-}
-
-.cell-input:focus {
+  color: #1f2937;
+  font-size: 15px;
   outline: none;
-  border-color: #6f79fb;
-  box-shadow: 0 0 0 4px rgba(111, 121, 251, 0.1);
-  transform: translateY(-2px);
+  transition: border-color 0.2s ease;
 }
 
-.cell-input.correct {
-  border-color: #10b981;
-  background: #d1fae5;
-  color: #065f46;
+.task-input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
-.cell-input.incorrect {
-  border-color: #ef4444;
-  background: #fee2e2;
-  color: #991b1b;
+.task-input::placeholder {
+  color: #9ca3af;
 }
 
+/* ===== Кнопки ===== */
 .action-button {
-  padding: 14px 40px;
-  background: #6f79fb;
-  color: #ffffff;
+  padding: 12px 24px;
   border: none;
   border-radius: 12px;
-  font-size: 16px;
+  background: #4f46e5;
+  color: #ffffff;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(111, 121, 251, 0.3);
 }
 
 .action-button:hover:not(:disabled) {
-  background: #5a64e8;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(111, 121, 251, 0.4);
+  background: #4338ca;
 }
 
 .action-button:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
   opacity: 0.6;
-  box-shadow: none;
+  cursor: not-allowed;
 }
 
 .secondary-button {
-  background: #ffffff;
-  color: #6f79fb;
-  border: 2px solid #6f79fb;
+  background: #eef2ff;
+  color: #4f46e5;
 }
 
-.secondary-button:hover {
-  background: #f3f4f6;
+.secondary-button:hover:not(:disabled) {
+  background: #e0e7ff;
 }
 
+.task-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ===== Сообщения статуса ===== */
 .status-message {
   font-size: 14px;
   font-weight: 600;
   padding: 10px 20px;
-  border-radius: 8px;
-  margin-top: 8px;
+  border-radius: 10px;
+  margin: 8px 0 0;
 }
 
 .status-message.success {
@@ -182,173 +233,11 @@
   border: 1px solid #fca5a5;
 }
 
-.help-section {
-  width: 100%;
-  padding: 24px;
-  border-radius: 12px;
-  background: #fef3c7;
-  border-left: 4px solid #f59e0b;
-  text-align: left;
-  margin-top: 16px;
-}
-
-.help-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #92400e;
-  margin: 0 0 12px 0;
-}
-
-.help-content {
-  font-size: 14px;
-  color: #78350f;
-  line-height: 1.6;
-  margin: 0;
-}
-
-.reference-panel {
-  position: fixed;
-  bottom: 92px; 
-  right: 24px;
-  width: 300px;
-  max-width: calc(100vw - 48px);
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.15);
-  padding: 20px;
-  z-index: 998;
-  border: 1px solid #e5e7eb;
-}
-.reference-close {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: #9ca3af;
-  cursor: pointer;
-  padding: 4px;
-  line-height: 1;
-  transition: color 0.2s;
-}
-
-.reference-close:hover {
-  color: #4b5563;
-}
-
-.reference-toggle {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #6f79fb;
-  color: #ffffff;
-  border: none;
-  font-size: 26px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(111, 121, 251, 0.4);
-  z-index: 999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.reference-toggle:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 16px rgba(111, 121, 251, 0.5);
-}
-
-.task-input {
-  width: 100%;
-  max-width: 420px;
-
-  padding: 16px 20px;
-
-  border: 1px solid #d1d5db;
-  border-radius: 14px;
-
-  background: #ffffff;
-
-  font-size: 16px;
-  color: #111827;
-
-  outline: none;
-
-  transition: 0.2s;
-}
-
-.task-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-}
-
-.answer-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-
-  margin-top: 32px;
-}
-
-.task-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.ai-badge {
-  display: inline-flex;
-  align-self: center;
-  margin-bottom: 18px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: #eef2ff;
-  color: #4f46e5;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.task-input {
-  width: 100%;
-  max-width: 420px;
-  padding: 16px 20px;
-  border: 1px solid #d1d5db;
-  border-radius: 14px;
-  background: #ffffff;
-  color: #111827;
-  font-size: 16px;
-  outline: none;
-}
-
-.task-input:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-}
-
-.answer-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  margin-top: 32px;
-}
-
-.task-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
+/* ===== Панели подсказки и объяснения от ИИ ===== */
 .ai-panel {
-  margin-top: 24px;
-  padding: 18px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 20px;
   border-radius: 16px;
   background: #f9fafb;
   color: #374151;
@@ -356,14 +245,14 @@
 }
 
 .ai-panel h3 {
-  margin: 0 0 8px;
-  color: #111827;
-  font-size: 18px;
+  margin: 0 0 10px;
+  color: #1f2937;
+  font-size: 16px;
 }
 
 .ai-panel p {
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .ai-panel ol {
@@ -380,100 +269,31 @@
   border-left: 4px solid #4f46e5;
 }
 
-.action-button:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.explain-button {
-  margin-top: 10px;
-
-  min-width: 220px;
-
-  font-weight: 600;
-  letter-spacing: 0.2px;
-}
-
-@media (max-width: 768px) {
-  .home-card,
-  .login-card,
-  .dashboard-card,
-  .diagnostic-card,
-  .result-card,
-  .profile-card,
-  .task-card {
-    width: 100%;
-    max-width: 100%;
-    padding: 24px;
-    border-radius: 20px;
-  }
-
-  .home-page,
-  .login-page,
-  .dashboard-page,
-  .diagnostic-page,
-  .result-page,
-  .profile-page,
-  .tasks-page {
-    padding: 16px;
-  }
-
-  h1,
-  .tasks-title {
-    font-size: 28px;
-  }
-
-  .task-question,
-  .task-condition {
-    font-size: 22px;
-    line-height: 1.35;
-  }
-}
-
-@media (max-width: 480px) {
-  .dashboard-actions,
-  .task-actions,
-  .result-actions {
-    flex-direction: column;
-  }
-
-  .dashboard-primary-link,
-  .dashboard-secondary-link,
-  .dashboard-logout-button,
-  .result-profile-link,
-  .profile-training-link,
-  .action-button {
-    width: 100%;
-  }
-
-  .home-card h1,
-  .login-card h1,
-  .profile-card h1,
-  .result-card h1,
-  .diagnostic-card h1,
-  .tasks-title {
-    font-size: 24px;
-  }
-}
-
+/* ===== История заданий (кружочки №6.1, №7.2 ...) ===== */
 .training-history {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
-  margin: 20px 0;
+  margin: 4px 0;
 }
 
 .history-button {
   min-width: 44px;
   min-height: 36px;
   padding: 8px 12px;
-  border: 1px solid #dbeafe;
+  border: 1px solid #e0e7ff;
   border-radius: 999px;
   background: #ffffff;
-  color: #2563eb;
+  color: #4f46e5;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.history-button:hover {
+  background: #eef2ff;
 }
 
 .history-button.active {
@@ -488,69 +308,23 @@
   border-color: #a7f3d0;
 }
 
-.task-type-selector {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 24px;
+.history-button.solved.active {
+  background: #047857;
+  color: #ffffff;
+  border-color: #047857;
 }
 
-.task-type-selector label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  color: #475569;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.task-type-selector select {
-  width: 360px;
-  max-width: 100%;
-  padding: 14px 44px 14px 16px;
-
-  border: 1px solid #dbeafe;
-  border-radius: 16px;
-
-  background: #ffffff;
-  color: #0f172a;
-
-  font-size: 15px;
-  font-weight: 500;
-
-  outline: none;
-  cursor: pointer;
-
-  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.08);
-}
-
-.task-type-selector select:focus {
-  border-color: #6366f1;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
-}
-
-@media (max-width: 640px) {
-  .task-type-selector {
-    align-items: stretch;
-  }
-
-  .task-type-selector label,
-  .task-type-selector select,
-  .task-type-selector .action-button {
-    width: 100%;
-  }
-}
-
+/* ===== Панель слабых тем ===== */
 .weak-topics-panel {
-  margin-bottom: 24px;
+  width: 100%;
   text-align: center;
 }
 
-.weak-topics-panel h3 {
-  margin: 0 0 12px;
-  color: #0f172a;
+.weak-topics-title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 .weak-topics-list {
@@ -561,15 +335,75 @@
 }
 
 .weak-topic-button {
-  padding: 10px 14px;
-  border: 1px solid #dbeafe;
+  padding: 10px 16px;
+  border: 1px solid #e0e7ff;
   border-radius: 999px;
   background: #ffffff;
-  color: #2563eb;
+  color: #4f46e5;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.weak-topic-button:hover {
+.weak-topic-button:hover:not(:disabled) {
   background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+.weak-topic-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== Адаптив ===== */
+@media (max-width: 768px) {
+  .tasks-page {
+    padding: 24px 16px;
+  }
+
+  .task-card {
+    padding: 28px 22px;
+    border-radius: 20px;
+  }
+
+  .tasks-title {
+    font-size: 28px;
+  }
+
+  .task-condition {
+    font-size: 20px;
+    line-height: 1.4;
+  }
+
+  .mode-button {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .task-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .task-actions .action-button {
+    width: 100%;
+  }
+
+  .tasks-title {
+    font-size: 24px;
+  }
+
+  .mode-selector {
+    gap: 8px;
+  }
+
+  .mode-button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 10px 8px;
+    font-size: 12px;
+  }
 }
