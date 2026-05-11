@@ -10,6 +10,7 @@ import {
   getRecommendations,
   type Recommendation,
 } from "../api/progress";
+import { FunctionGraphs } from "../components/FunctionGraphs";
 import "./TasksPage.css";
 
 type CheckStatus = "idle" | "checking" | "success" | "error";
@@ -99,7 +100,8 @@ export default function TasksPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [isRecommendationsLoading, setIsRecommendationsLoading] = useState(false);
+  const [isRecommendationsLoading, setIsRecommendationsLoading] =
+    useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [pageError, setPageError] = useState("");
@@ -168,7 +170,7 @@ export default function TasksPage() {
       addTaskToHistory(task);
     } catch (error) {
       console.error("Generate task error:", error);
-      setPageError("Не удалось загрузить задание. Возможно, AI-сервис временно недоступен.");
+      setPageError("Не удалось загрузить задание.");
     } finally {
       setIsLoading(false);
     }
@@ -220,14 +222,22 @@ export default function TasksPage() {
   async function handleCheck() {
     if (!current || !current.answer.trim()) return;
 
-    updateCurrent({ checkStatus: "checking", feedback: "" });
+    updateCurrent({
+      checkStatus: "checking",
+      feedback: "",
+    });
 
     try {
-      const result = await checkAnswer(current.task.id, current.answer);
+      const result = await checkAnswer(
+        current.task.id,
+        current.answer
+      );
 
       updateCurrent({
         feedback: result.short_feedback,
-        checkStatus: result.is_correct ? "success" : "error",
+        checkStatus: result.is_correct
+          ? "success"
+          : "error",
       });
     } catch (error) {
       console.error("Check answer error:", error);
@@ -244,10 +254,16 @@ export default function TasksPage() {
 
     try {
       const result = await getHint(current.task.id);
-      updateCurrent({ hint: result.hint });
+
+      updateCurrent({
+        hint: result.hint,
+      });
     } catch (error) {
       console.error("Hint error:", error);
-      updateCurrent({ hint: "Не удалось получить подсказку." });
+
+      updateCurrent({
+        hint: "Не удалось получить подсказку.",
+      });
     }
   }
 
@@ -255,40 +271,57 @@ export default function TasksPage() {
     if (!current) return;
 
     try {
-      const result = await getExplanation(current.task.id);
+      const result = await getExplanation(
+        current.task.id
+      );
 
       updateCurrent({
-        explanation: result.steps?.length ? result.steps : [result.explanation],
+        explanation: result.steps?.length
+          ? result.steps
+          : [result.explanation],
       });
     } catch (error) {
       console.error("Explanation error:", error);
-      updateCurrent({ explanation: ["Не удалось получить объяснение."] });
+
+      updateCurrent({
+        explanation: [
+          "Не удалось получить объяснение.",
+        ],
+      });
     }
   }
 
   return (
     <main className="tasks-page">
       <header className="tasks-header">
-        <h1 className="tasks-title">Тренировка</h1>
+        <h1 className="tasks-title">
+          Тренировка
+        </h1>
 
         <div className="mode-selector">
           <button
-            className={`mode-button ${mode === "weak" ? "active" : ""}`}
-            onClick={() => switchMode("weak")}
+            className={`mode-button ${
+              mode === "weak" ? "active" : ""
+            }`}
+            onClick={() => setMode("weak")}
           >
             Слабые темы
           </button>
 
           <button
-            className={`mode-button ${mode === "all" ? "active" : ""}`}
-            onClick={() => switchMode("all")}
+            className={`mode-button ${
+              mode === "all" ? "active" : ""
+            }`}
+            onClick={() => setMode("all")}
           >
             Все задания
           </button>
 
           <button
-            className={`mode-button ${mode === "custom" ? "active" : ""}`}
-            onClick={() => switchMode("custom")}
+            className={`mode-button ${
+              mode === "custom" ? "active" : ""
+            }`}
+            onClick={() => setMode("custom")}
           >
             Выбрать
           </button>
@@ -300,14 +333,19 @@ export default function TasksPage() {
           <div className="task-type-selector">
             <label className="task-type-label">
               Выбери тип задания
+
               <select
                 value={selectedType.subtypeCode}
                 onChange={(e) => {
                   const type = taskTypes.find(
-                    (item) => item.subtypeCode === e.target.value
+                    (item) =>
+                      item.subtypeCode ===
+                      e.target.value
                   );
 
-                  if (type) setSelectedType(type);
+                  if (type) {
+                    setSelectedType(type);
+                  }
                 }}
               >
                 {taskTypes.map((type) => (
@@ -326,7 +364,9 @@ export default function TasksPage() {
               onClick={loadCustomTask}
               disabled={isLoading}
             >
-              {isLoading ? "ИИ генерирует..." : "Сгенерировать задание"}
+              {isLoading
+                ? "ИИ генерирует..."
+                : "Сгенерировать задание"}
             </button>
           </div>
         )}
@@ -338,30 +378,43 @@ export default function TasksPage() {
               onClick={loadAllTask}
               disabled={isLoading}
             >
-              {isLoading ? "ИИ генерирует..." : "Сгенерировать случайное задание"}
+              {isLoading
+                ? "ИИ генерирует..."
+                : "Сгенерировать случайное задание"}
             </button>
           </div>
         )}
 
         {mode === "weak" && (
           <div className="weak-topics-panel">
-            <h3 className="weak-topics-title">Твои слабые темы</h3>
+            <h3>Слабые темы</h3>
 
-            {isRecommendationsLoading && <p className="task-hint">Загружаем рекомендации...</p>}
-
-            {!isRecommendationsLoading && recommendations.length === 0 && (
-              <p className="task-hint">Пока слабые темы не найдены. Сначала пройди диагностику.</p>
+            {isRecommendationsLoading && (
+              <p>Загружаем рекомендации...</p>
             )}
+
+            {!isRecommendationsLoading &&
+              recommendations.length ===
+                0 && (
+                <p>
+                  Пока слабые темы не найдены.
+                  Сначала пройди диагностику.
+                </p>
+              )}
 
             <div className="weak-topics-list">
               {recommendations.map((item) => (
                 <button
                   key={`${item.oge_number}-${item.subtype_code}`}
                   className="weak-topic-button"
-                  onClick={() => loadWeakTask(item)}
+                  onClick={() =>
+                    loadWeakTask(item)
+                  }
                   disabled={isLoading}
                 >
-                  №{item.oge_number} {item.title ?? item.subtype_code}
+                  №{item.oge_number}{" "}
+                  {item.title ??
+                    item.subtype_code}
                 </button>
               ))}
             </div>
@@ -375,31 +428,59 @@ export default function TasksPage() {
                 key={`${item.task.id}-${index}`}
                 type="button"
                 className={`history-button ${
-                  index === currentIndex ? "active" : ""
-                } ${item.checkStatus === "success" ? "solved" : ""}`}
-                onClick={() => setCurrentIndex(index)}
+                  index === currentIndex
+                    ? "active"
+                    : ""
+                } ${
+                  item.checkStatus ===
+                  "success"
+                    ? "solved"
+                    : ""
+                }`}
+                onClick={() =>
+                  setCurrentIndex(index)
+                }
               >
-                №{item.task.oge_number}.{index + 1}
+                №{item.task.oge_number}.
+                {index + 1}
               </button>
             ))}
           </div>
         )}
 
-        {pageError && <p className="status-message error">{pageError}</p>}
+        {pageError && (
+          <p className="status-message error">
+            {pageError}
+          </p>
+        )}
 
         {!current && !isLoading && (
           <p className="task-hint">
-            Выбери режим тренировки и сгенерируй задание.
+            Выбери режим тренировки и
+            сгенерируй задание.
           </p>
         )}
 
         {current && (
           <>
-            <div className="ai-badge">🤖 Задание от ИИ</div>
+            <div className="ai-badge">
+              🤖 Задание от ИИ
+            </div>
 
-            <p className="task-hint">Задание №{current.task.oge_number}</p>
+            <p className="task-hint">
+              Задание №
+              {current.task.oge_number}
+            </p>
 
-            <h2 className="task-condition">{current.task.question}</h2>
+            <h2 className="task-condition">
+              {current.task.question}
+            </h2>
+
+            {((current.task.graphs ?? current.task.graph_data)?.length ?? 0) > 0 && (
+  <FunctionGraphs
+    graphs={current.task.graphs ?? current.task.graph_data ?? []}
+  />
+)}
 
             <div className="answer-section">
               <input
@@ -420,10 +501,13 @@ export default function TasksPage() {
                 className="action-button"
                 onClick={handleCheck}
                 disabled={
-                  !current.answer.trim() || current.checkStatus === "checking"
+                  !current.answer.trim() ||
+                  current.checkStatus ===
+                    "checking"
                 }
               >
-                {current.checkStatus === "checking"
+                {current.checkStatus ===
+                "checking"
                   ? "ИИ проверяет..."
                   : "Проверить"}
               </button>
@@ -436,11 +520,15 @@ export default function TasksPage() {
                   Подсказка
                 </button>
 
-                {(current.checkStatus === "success" ||
-                  current.checkStatus === "error") && (
+                {(current.checkStatus ===
+                  "success" ||
+                  current.checkStatus ===
+                    "error") && (
                   <button
                     className="action-button secondary-button explain-button"
-                    onClick={handleExplanation}
+                    onClick={
+                      handleExplanation
+                    }
                   >
                     Объяснение
                   </button>
@@ -450,7 +538,8 @@ export default function TasksPage() {
               {current.feedback && (
                 <p
                   className={
-                    current.checkStatus === "success"
+                    current.checkStatus ===
+                    "success"
                       ? "status-message success"
                       : "status-message error"
                   }
@@ -463,18 +552,26 @@ export default function TasksPage() {
             {current.hint && (
               <div className="ai-panel hint-panel">
                 <h3>💡 Подсказка</h3>
+
                 <p>{current.hint}</p>
               </div>
             )}
 
-            {current.explanation.length > 0 && (
+            {current.explanation.length >
+              0 && (
               <div className="ai-panel explain-panel">
                 <h3>📘 Объяснение</h3>
 
                 <ol>
-                  {current.explanation.map((step, index) => (
-                    <li key={`${step}-${index}`}>{step}</li>
-                  ))}
+                  {current.explanation.map(
+                    (step, index) => (
+                      <li
+                        key={`${step}-${index}`}
+                      >
+                        {step}
+                      </li>
+                    )
+                  )}
                 </ol>
               </div>
             )}
