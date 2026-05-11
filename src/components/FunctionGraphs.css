@@ -1,0 +1,37 @@
+.graphs-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.graph-card {
+  padding: 16px;
+  border-radius: 18px;
+  background: #f8fafc;
+}
+
+.graph-title {
+  margin: 0 0 12px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.function-graph {
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.graph-axis {
+  stroke: #cbd5e1;
+  stroke-width: 1.5;
+}
+
+.graph-line {
+  fill: none;
+  stroke: #4f46e5;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
