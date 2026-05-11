@@ -24,10 +24,13 @@ export type ExplainResponse = {
   steps: string[];
 };
 
-export function generateTask(mode: "all" | "weak" = "all") {
-  return apiPost<GeneratedTask>("/api/v1/tasks/generate", {
-    mode,
-  });
+export function generateTask(
+  request:
+    | { mode: "all" }
+    | { mode: "weak" }
+    | { mode: "custom"; oge_number: number; subtype_code: string }
+) {
+  return apiPost<GeneratedTask>("/api/v1/tasks/generate", request);
 }
 
 export function checkAnswer(taskId: number, studentAnswer: string) {
