@@ -106,6 +106,16 @@ export default function TasksPage() {
 
   const current = history[currentIndex];
 
+  // Сброс состояния при переключении режима, чтобы задачи и история одного режима
+  // не «протекали» в другой
+  function switchMode(newMode: TrainingMode) {
+    if (newMode === mode) return;
+    setMode(newMode);
+    setHistory([]);
+    setCurrentIndex(0);
+    setPageError("");
+  }
+
   async function loadRecommendations() {
     setIsRecommendationsLoading(true);
     setPageError("");
@@ -264,21 +274,21 @@ export default function TasksPage() {
         <div className="mode-selector">
           <button
             className={`mode-button ${mode === "weak" ? "active" : ""}`}
-            onClick={() => setMode("weak")}
+            onClick={() => switchMode("weak")}
           >
             Слабые темы
           </button>
 
           <button
             className={`mode-button ${mode === "all" ? "active" : ""}`}
-            onClick={() => setMode("all")}
+            onClick={() => switchMode("all")}
           >
             Все задания
           </button>
 
           <button
             className={`mode-button ${mode === "custom" ? "active" : ""}`}
-            onClick={() => setMode("custom")}
+            onClick={() => switchMode("custom")}
           >
             Выбрать
           </button>
@@ -335,18 +345,12 @@ export default function TasksPage() {
 
         {mode === "weak" && (
           <div className="weak-topics-panel">
-            <button
-  type="button"
-  className={`mode-button ${mode === "weak" ? "active" : ""}`}
-  onClick={() => setMode("weak")}
->
-  Слабые темы
-</button>
+            <h3 className="weak-topics-title">Твои слабые темы</h3>
 
-            {isRecommendationsLoading && <p>Загружаем рекомендации...</p>}
+            {isRecommendationsLoading && <p className="task-hint">Загружаем рекомендации...</p>}
 
             {!isRecommendationsLoading && recommendations.length === 0 && (
-              <p>Пока слабые темы не найдены. Сначала пройди диагностику.</p>
+              <p className="task-hint">Пока слабые темы не найдены. Сначала пройди диагностику.</p>
             )}
 
             <div className="weak-topics-list">
