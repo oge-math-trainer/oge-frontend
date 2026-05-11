@@ -324,3 +324,9 @@
     flex-direction: column;
   }
 }
+
+.diagnostic-error {
+  margin: 16px 0;
+  color: #b91c1c;
+  font-size: 14px;
+}
