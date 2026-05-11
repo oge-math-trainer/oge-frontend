@@ -455,3 +455,121 @@
     font-size: 24px;
   }
 }
+
+.training-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.history-button {
+  min-width: 44px;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.history-button.active {
+  background: #4f46e5;
+  color: #ffffff;
+  border-color: #4f46e5;
+}
+
+.history-button.solved {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.task-type-selector {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.task-type-selector label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.task-type-selector select {
+  width: 360px;
+  max-width: 100%;
+  padding: 14px 44px 14px 16px;
+
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+
+  background: #ffffff;
+  color: #0f172a;
+
+  font-size: 15px;
+  font-weight: 500;
+
+  outline: none;
+  cursor: pointer;
+
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.08);
+}
+
+.task-type-selector select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
+}
+
+@media (max-width: 640px) {
+  .task-type-selector {
+    align-items: stretch;
+  }
+
+  .task-type-selector label,
+  .task-type-selector select,
+  .task-type-selector .action-button {
+    width: 100%;
+  }
+}
+
+.weak-topics-panel {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.weak-topics-panel h3 {
+  margin: 0 0 12px;
+  color: #0f172a;
+}
+
+.weak-topics-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.weak-topic-button {
+  padding: 10px 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.weak-topic-button:hover {
+  background: #eef2ff;
+}
