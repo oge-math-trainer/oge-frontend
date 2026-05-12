@@ -12,6 +12,7 @@ import {
 } from "../api/progress";
 import { FunctionGraphs } from "../components/FunctionGraphs";
 import "./TasksPage.css";
+import { MathContent } from "../components/MathContent";
 
 type CheckStatus = "idle" | "checking" | "success" | "error";
 type TrainingMode = "weak" | "all" | "custom";
@@ -303,7 +304,7 @@ export default function TasksPage() {
             className={`mode-button ${
               mode === "weak" ? "active" : ""
             }`}
-            onClick={() => setMode("weak")}
+            onClick={() => switchMode("weak")}
           >
             Слабые темы
           </button>
@@ -312,7 +313,7 @@ export default function TasksPage() {
             className={`mode-button ${
               mode === "all" ? "active" : ""
             }`}
-            onClick={() => setMode("all")}
+            onClick={() => switchMode("all")}
           >
             Все задания
           </button>
@@ -321,7 +322,7 @@ export default function TasksPage() {
             className={`mode-button ${
               mode === "custom" ? "active" : ""
             }`}
-            onClick={() => setMode("custom")}
+            onClick={() => switchMode("custom")}
           >
             Выбрать
           </button>
@@ -473,7 +474,7 @@ export default function TasksPage() {
             </p>
 
             <h2 className="task-condition">
-              {current.task.question}
+              <MathContent>{current.task.question}</MathContent>
             </h2>
 
             {((current.task.graphs ?? current.task.graph_data)?.length ?? 0) > 0 && (
@@ -552,8 +553,7 @@ export default function TasksPage() {
             {current.hint && (
               <div className="ai-panel hint-panel">
                 <h3>💡 Подсказка</h3>
-
-                <p>{current.hint}</p>
+                <p><MathContent>{current.hint}</MathContent></p>
               </div>
             )}
 
@@ -568,7 +568,7 @@ export default function TasksPage() {
                       <li
                         key={`${step}-${index}`}
                       >
-                        {step}
+                        <MathContent>{step}</MathContent>
                       </li>
                     )
                   )}
