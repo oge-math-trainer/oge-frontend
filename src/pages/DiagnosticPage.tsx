@@ -5,6 +5,7 @@ import {
   type DiagnosticTask,
 } from "../api/diagnostic";
 import "./DiagnosticPage.css";
+import { MathContent } from "../components/MathContent";
 
 type DiagnosticAnswer = {
   taskId: number;
@@ -210,7 +211,7 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
 
         <p className="task-number">Задание №{currentTask.oge_number}</p>
 
-        <div className="task-question">{currentTask.question}</div>
+        <div className="task-question"><MathContent>{currentTask.question}</MathContent></div>
 
         <label className="answer-field">
           Ваш ответ

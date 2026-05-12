@@ -8,7 +8,6 @@ type RegisterPageProps = {
 };
 
 export function RegisterPage({ onRegisterSuccess }: RegisterPageProps) {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,13 +48,6 @@ export function RegisterPage({ onRegisterSuccess }: RegisterPageProps) {
         </p>
 
         <form className="register-form" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Имя"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-
           <input
             type="email"
             placeholder="Почта"
