@@ -13,7 +13,60 @@ import {
 import { FunctionGraphs } from "../components/FunctionGraphs";
 import "./TasksPage.css";
 import { MathContent } from "../components/MathContent";
-
+// Человекочитаемые названия тем по их subtype_code
+const TOPIC_LABELS: Record<string, string> = {
+  numbers_fractions: "Обыкновенные дроби",
+  numbers_decimal: "Десятичные дроби",
+  numbers_integers: "Целые числа",
+  numberline_compare: "Числовая прямая",
+  inequalities_simple: "Простейшие неравенства",
+  algebra_powers: "Степени",
+  algebra_roots: "Корни",
+  algebra_formulas: "Формулы сокращённого умножения",
+  algebra_fractions: "Алгебраические дроби",
+  equations_linear: "Линейные уравнения",
+  equations_quadratic: "Квадратные уравнения",
+  equations_rational: "Дробно-рациональные уравнения",
+  equations_system_linear: "Системы линейных уравнений",
+  equations_system_mixed: "Смешанные системы",
+  probability_classic: "Классическая вероятность",
+  probability_tree: "Дерево вероятностей",
+  graphs_linear: "Линейная функция",
+  graphs_quadratic: "Квадратичная функция",
+  graphs_inverse: "Обратная пропорциональность",
+  graphs_transform: "Преобразования графиков",
+  graphs_match: "Соответствие графика и формулы",
+  formulas_subst: "Подстановка в формулу",
+  formulas_units: "Перевод единиц",
+  formulas_practical: "Практическая задача",
+  ineq_linear: "Линейные неравенства",
+  ineq_quadratic: "Квадратные неравенства",
+  ineq_system: "Системы неравенств",
+  ineq_rational: "Дробно-рациональные неравенства",
+  progression_arithm: "Арифметическая прогрессия",
+  progression_geom: "Геометрическая прогрессия",
+  triangles_angles: "Углы треугольника",
+  triangles_pythagor: "Теорема Пифагора",
+  triangles_area: "Площадь треугольника",
+  triangles_lines: "Замечательные линии",
+  circle_elements: "Элементы окружности",
+  circle_angles: "Вписанные и центральные углы",
+  circle_tangents: "Касательные",
+  circle_inscribed: "Вписанные и описанные окружности",
+  circle_sector: "Площадь сектора и сегмента",
+  quad_properties: "Свойства четырёхугольников",
+  quad_trapezoid: "Трапеция",
+  quad_area: "Площади четырёхугольников",
+  quad_diagonals: "Диагонали четырёхугольников",
+  grid_distance: "Расстояние на решётке",
+  grid_pythagor: "Пифагор на решётке",
+  grid_area: "Площадь на клетчатой бумаге",
+  grid_midline: "Средняя линия на решётке",
+  logic_angles: "Утверждения об углах и прямых",
+  logic_triangles: "Утверждения о треугольниках",
+  logic_quad: "Утверждения о четырёхугольниках",
+  logic_circle: "Утверждения об окружности",
+};
 type CheckStatus = "idle" | "checking" | "success" | "error";
 type TrainingMode = "weak" | "all" | "custom";
 
@@ -219,36 +272,35 @@ export default function TasksPage() {
       )
     );
   }
-
   async function handleCheck() {
-    if (!current || !current.answer.trim()) return;
+  if (!current || !current.answer.trim()) return;
+
+  updateCurrent({
+    checkStatus: "checking",
+    feedback: "",
+  });
+
+  try {
+    const result = await checkAnswer(
+      current.task.id,
+      current.answer
+    );
 
     updateCurrent({
-      checkStatus: "checking",
-      feedback: "",
+      feedback: result.is_correct ? "Верно" : "Неверно",
+      checkStatus: result.is_correct
+        ? "success"
+        : "error",
     });
+  } catch (error) {
+    console.error("Check answer error:", error);
 
-    try {
-      const result = await checkAnswer(
-        current.task.id,
-        current.answer
-      );
-
-      updateCurrent({
-        feedback: result.short_feedback,
-        checkStatus: result.is_correct
-          ? "success"
-          : "error",
-      });
-    } catch (error) {
-      console.error("Check answer error:", error);
-
-      updateCurrent({
-        feedback: "Не удалось проверить ответ.",
-        checkStatus: "error",
-      });
-    }
+    updateCurrent({
+      feedback: "Не удалось проверить ответ.",
+      checkStatus: "error",
+    });
   }
+}
 
   async function handleHint() {
     if (!current) return;
@@ -414,8 +466,7 @@ export default function TasksPage() {
                   disabled={isLoading}
                 >
                   №{item.oge_number}{" "}
-                  {item.title ??
-                    item.subtype_code}
+                  {TOPIC_LABELS[item.subtype_code] ?? item.subtype_code}
                 </button>
               ))}
             </div>
