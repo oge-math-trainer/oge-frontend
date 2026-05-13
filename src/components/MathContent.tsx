@@ -5,42 +5,66 @@ type MathContentProps = {
   className?: string;
 };
 
+// Список самых частых LaTeX-команд, которые ИИ присылает без обратного слэша
+// Когда ИИ забывает поставить \, мы это исправляем.
+const COMMON_LATEX_COMMANDS = [
+  'frac', 'sqrt', 'cdot', 'times', 'div',
+  'neq', 'leq', 'geq', 'approx', 'pm', 'mp',
+  'sum', 'prod', 'int', 'infty',
+  'alpha', 'beta', 'gamma', 'delta', 'pi', 'theta', 'lambda', 'mu',
+  'sin', 'cos', 'tan', 'log', 'ln',
+  'rightarrow', 'leftarrow', 'Rightarrow', 'Leftarrow',
+];
+
+/**
+ * Восстанавливает обратный слэш у LaTeX-команд, которые ИИ присылает без него.
+ * Например: "4 cdot 3" → "4 \cdot 3", "x neq 2" → "x \neq 2".
+ *
+ * Слово считается командой, если оно из списка и стоит как отдельное слово
+ * (с пробелами/операторами по краям).
+ */
+function fixMissingBackslashes(text: string): string {
+  const pattern = new RegExp(
+    `(^|[^a-zA-Z\\\\])(${COMMON_LATEX_COMMANDS.join('|')})(?![a-zA-Z])`,
+    'g',
+  );
+  return text.replace(pattern, '$1\\$2');
+}
+
 /**
  * Превращает «сырой» текст от ИИ в текст с LaTeX-делимитерами.
- *
- * ИИ непоследовательна и шлёт математику в 3 разных форматах:
- *   1. Голый LaTeX:        "\frac{3}{4}"           → оборачиваем в \( \)
- *   2. ASCII-нотация:       "b_1", "x^2", "b_{n+1}" → оборачиваем в \( \)
- *   3. Уже с делимитерами:  "$\frac{3}{4}$"         → оставляем как есть
  */
 function preprocess(raw: string): string {
   if (!raw) return '';
 
-  // Если в тексте уже есть $, \(, \[ — оставляем, MathJax сам разберётся
+  // Уже есть делимитеры — MathJax всё сделает сам
   if (/\$|\\\(|\\\[/.test(raw)) {
     return raw;
   }
 
-  // Регулярка ловит:
-  //   - LaTeX-команды вида \frac{...}{...}, \sqrt{...}, \cdot и т.п.
-  //   - Подчёркивания и степени: b_1, x^2, b_{n+1}, 2b_n, x^{n+1}
-  // Каждое такое выражение оборачиваем в \( ... \)
-  const mathPattern =
-    /(\\[a-zA-Z]+(?:\{[^{}]*\}){0,3}|[a-zA-Zа-яА-Я0-9]+(?:_\{[^}]+\}|_[a-zA-Z0-9]|\^\{[^}]+\}|\^[a-zA-Z0-9])+)/g;
+  // Сначала чиним пропущенные обратные слэши: "cdot" → "\cdot"
+  const fixed = fixMissingBackslashes(raw);
 
-  return raw.replace(mathPattern, (match) => `\\(${match}\\)`);
+  // Один математический токен: команда LaTeX или индекс/степень
+  const token =
+    String.raw`(?:\\[a-zA-Z]+(?:\{[^{}]*\})*` +
+    String.raw`|[a-zA-Zа-яА-Я0-9]+(?:_\{[^}]+\}|_[a-zA-Z0-9]|\^\{[^}]+\}|\^[a-zA-Z0-9])+)`;
+
+  // Группа из одного или нескольких токенов, между которыми могут стоять
+  // пробелы и базовые математические операторы.
+  const group = new RegExp(
+    `(?:${token})(?:[\\s+\\-*/=,.()]*(?:${token}))*`,
+    'g',
+  );
+
+  return fixed.replace(group, (match) => `\\(${match.trim()}\\)`);
 }
 
 export function MathContent({ children, className }: MathContentProps) {
   const processed = preprocess(children);
 
   return (
-    <MathJax
-      className={className}
-      // dynamic=true — переразбирать математику при изменении пропа children
-      // (например, когда переключаешь задачи)
-      dynamic
-    >
+    <MathJax className={className} dynamic>
       {processed}
     </MathJax>
   );

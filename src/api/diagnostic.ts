@@ -30,9 +30,18 @@ export type DiagnosticAnswerRequest = {
   student_answer: string;
 };
 
+// Один результат проверки одной задачи из массива answers
+export type DiagnosticAnswerResult = {
+  task_id: number;
+  oge_number?: number;
+  student_answer?: string;
+  is_correct?: boolean;
+  short_feedback?: string;
+};
+
 export type DiagnosticSubmitResponse = {
   session_id: number;
-  answers: unknown[];
+  answers: DiagnosticAnswerResult[];
   analysis?: {
     summary?: string;
     weak_topics?: string[];

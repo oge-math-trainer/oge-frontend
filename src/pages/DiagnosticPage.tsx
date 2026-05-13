@@ -4,6 +4,7 @@ import {
   startDiagnostic,
   submitDiagnostic,
   type DiagnosticTask,
+  type DiagnosticSubmitResponse,
 } from "../api/diagnostic";
 import "./DiagnosticPage.css";
 import { MathContent } from "../components/MathContent";
@@ -14,7 +15,7 @@ type DiagnosticAnswer = {
 };
 
 type DiagnosticPageProps = {
-  onFinish: (answers: DiagnosticAnswer[]) => void;
+  onFinish: (result: DiagnosticSubmitResponse) => void;
 };
 
 export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
@@ -237,35 +238,51 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
 
     return "Завершить диагностику";
   }
-
   async function handleConfirmFinish() {
-    if (!sessionId) return;
+  if (!sessionId) return;
 
-    isFinishingRef.current = true;
+  const updatedAnswers = saveCurrentAnswer();
 
-    const updatedAnswers = saveCurrentAnswer();
+  const preparedAnswers = updatedAnswers
+    .filter((item) => item.answer.trim())
+    .map((item) => ({
+      task_id: item.taskId,
+      student_answer: item.answer,
+    }));
 
-    const preparedAnswers = updatedAnswers
-      .filter((item) => item.answer.trim())
-      .map((item) => ({
-        task_id: item.taskId,
-        student_answer: item.answer,
+  setIsSubmitting(true);
+
+  try {
+    const result = await submitDiagnostic(sessionId, preparedAnswers);
+
+    // Бэк присылает только проверенные ответы. Дополняем массив пропущенными
+    // на основе всех заданий из диагностики, чтобы на /result был полный список.
+    const checkedIds = new Set(result.answers?.map((a) => a.task_id) ?? []);
+
+    const skippedAnswers = diagnosticTasks
+      .filter((task) => !checkedIds.has(task.id))
+      .map((task) => ({
+        task_id: task.id,
+        oge_number: task.oge_number,
+        student_answer: "",
+        is_correct: false as boolean | undefined,
+        short_feedback: "Задание пропущено",
       }));
 
-    setIsSubmitting(true);
+    const enrichedResult = {
+      ...result,
+      answers: [...(result.answers ?? []), ...skippedAnswers],
+    };
 
-    try {
-      await submitDiagnostic(sessionId, preparedAnswers);
-      onFinish(updatedAnswers);
-    } catch (err) {
-      console.error("Submit diagnostic error:", err);
-      isFinishingRef.current = false;
-      setError("Не удалось завершить диагностику. Попробуй ещё раз.");
-      setShowFinishModal(false);
-    } finally {
-      setIsSubmitting(false);
-    }
+    onFinish(enrichedResult);
+  } catch (err) {
+    console.error("Submit diagnostic error:", err);
+    setError("Не удалось завершить диагностику. Попробуй ещё раз.");
+    setShowFinishModal(false);
+  } finally {
+    setIsSubmitting(false);
   }
+}
 
   if (isLoading) {
     return (

@@ -32,7 +32,7 @@
 
 .result-stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin: 28px 0;
 }
@@ -55,6 +55,56 @@
   font-size: 34px;
 }
 
+/* ===== Анализ от ИИ и Слабые темы ===== */
+.result-analysis {
+  margin-top: 24px;
+  padding: 20px 22px;
+  border-radius: 18px;
+  background: #f5f3ff;
+  border-left: 4px solid #4f46e5;
+}
+
+.result-analysis h2 {
+  margin: 0 0 10px;
+  color: #1f2937;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-analysis p {
+  margin: 0;
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.weak-topics-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.weak-topics-list li {
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #c7d2fe;
+  color: #4f46e5;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: lowercase;
+}
+
+.weak-topics-list li::first-letter {
+  text-transform: uppercase;
+}
+
+/* ===== Список ответов по заданиям ===== */
 .result-list {
   margin-top: 28px;
 }
@@ -111,6 +161,7 @@
   color: #6b7280;
 }
 
+/* ===== Кнопки внизу ===== */
 .result-actions {
   display: flex;
   flex-direction: column;
@@ -156,6 +207,19 @@
   .result-card {
     padding: 28px;
     border-radius: 24px;
+  }
+
+  .result-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .result-stat-item {
+    padding: 14px;
+  }
+
+  .result-stat-item strong {
+    font-size: 26px;
   }
 }
 

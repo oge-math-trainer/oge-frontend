@@ -15,19 +15,14 @@ import { DiagnosticPage } from "./pages/DiagnosticPage";
 import { ResultPage } from "./pages/ResultPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
-
-type DiagnosticAnswer = {
-  taskId: number;
-  answer: string;
-};
+import type { DiagnosticSubmitResponse } from "./api/diagnostic";
 
 function AppRoutes() {
   const [isLoggedIn, setIsLoggedIn] = useState(
     Boolean(localStorage.getItem("auth_token"))
   );
-  const [diagnosticAnswers, setDiagnosticAnswers] = useState<DiagnosticAnswer[]>(
-    []
-  );
+  const [diagnosticResult, setDiagnosticResult] =
+    useState<DiagnosticSubmitResponse | null>(null);
 
   const navigate = useNavigate();
 
@@ -40,7 +35,7 @@ function AppRoutes() {
     localStorage.removeItem("auth_token");
     localStorage.removeItem("user_email");
     setIsLoggedIn(false);
-    setDiagnosticAnswers([]);
+    setDiagnosticResult(null);
     navigate("/login");
   }
 
@@ -53,14 +48,11 @@ function AppRoutes() {
         element={<LoginPage onLoginSuccess={handleLoginSuccess} />}
       />
 
-    <Route
+      <Route
         path="/register"
-         element={
-    <RegisterPage
-      onRegisterSuccess={handleLoginSuccess}
-    />
-    }
-/>
+        element={<RegisterPage onRegisterSuccess={handleLoginSuccess} />}
+      />
+
       <Route
         path="/dashboard"
         element={
@@ -77,8 +69,8 @@ function AppRoutes() {
         element={
           isLoggedIn ? (
             <DiagnosticPage
-              onFinish={(answers) => {
-                setDiagnosticAnswers(answers);
+              onFinish={(result) => {
+                setDiagnosticResult(result);
                 navigate("/result");
               }}
             />
@@ -93,9 +85,9 @@ function AppRoutes() {
         element={
           isLoggedIn ? (
             <ResultPage
-              answers={diagnosticAnswers}
+              result={diagnosticResult}
               onRestart={() => {
-                setDiagnosticAnswers([]);
+                setDiagnosticResult(null);
                 navigate("/diagnostic");
               }}
             />
