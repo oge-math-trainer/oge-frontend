@@ -48,6 +48,15 @@
   transition: width 0.2s ease;
 }
 
+.diagnostic-generation-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -14px 0 24px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
 .task-number {
   display: inline-block;
   margin: 0 0 16px;
@@ -111,6 +120,44 @@
   cursor: not-allowed;
 }
 
+.diagnostic-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.diagnostic-actions button {
+  flex: 1;
+}
+
+.diagnostic-secondary-button {
+  background: #eef2ff !important;
+  color: #4f46e5 !important;
+}
+
+.diagnostic-warning {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.diagnostic-warning p {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.diagnostic-warning button {
+  width: auto;
+  flex: 0 0 auto;
+  background: #f59e0b;
+}
+
 @media (max-width: 520px) {
   .diagnostic-card {
     padding: 22px;
@@ -119,6 +166,16 @@
   .task-question {
     padding: 18px;
     font-size: 20px;
+  }
+
+  .diagnostic-actions,
+  .diagnostic-generation-status,
+  .diagnostic-warning {
+    flex-direction: column;
+  }
+
+  .diagnostic-warning button {
+    width: 100%;
   }
 }
 

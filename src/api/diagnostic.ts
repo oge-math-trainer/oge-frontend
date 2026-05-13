@@ -12,6 +12,17 @@ export type DiagnosticTask = {
 export type DiagnosticStartResponse = {
   session_id: number;
   tasks: DiagnosticTask[];
+  total_tasks: number;
+  generated_count: number;
+  complete: boolean;
+};
+
+export type DiagnosticNextResponse = {
+  session_id: number;
+  task?: DiagnosticTask;
+  total_tasks: number;
+  generated_count: number;
+  complete: boolean;
 };
 
 export type DiagnosticAnswerRequest = {
@@ -30,6 +41,12 @@ export type DiagnosticSubmitResponse = {
 
 export function startDiagnostic() {
   return apiPost<DiagnosticStartResponse>("/api/v1/diagnostic/start", {});
+}
+
+export function loadNextDiagnosticTask(sessionId: number) {
+  return apiPost<DiagnosticNextResponse>("/api/v1/diagnostic/next", {
+    session_id: sessionId,
+  });
 }
 
 export function submitDiagnostic(
