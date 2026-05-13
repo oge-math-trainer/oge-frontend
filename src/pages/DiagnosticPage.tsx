@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  loadNextDiagnosticTask,
   startDiagnostic,
   submitDiagnostic,
   type DiagnosticTask,
@@ -19,32 +20,116 @@ type DiagnosticPageProps = {
 export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
   const [sessionId, setSessionId] = useState<number | null>(null);
   const [diagnosticTasks, setDiagnosticTasks] = useState<DiagnosticTask[]>([]);
+  const diagnosticTasksRef = useRef<DiagnosticTask[]>([]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [answers, setAnswers] = useState<DiagnosticAnswer[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingNext, setIsLoadingNext] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [totalTasks, setTotalTasks] = useState(14);
+  const [isDiagnosticComplete, setIsDiagnosticComplete] = useState(false);
   const [error, setError] = useState("");
+  const [nextError, setNextError] = useState("");
 
   const [showFinishModal, setShowFinishModal] = useState(false);
+  const isLoadingNextRef = useRef(false);
+  const isDiagnosticCompleteRef = useRef(false);
+  const isFinishingRef = useRef(false);
+  const didAutoLoadRef = useRef(false);
 
   const currentTask = diagnosticTasks[currentIndex];
-  const isLastTask = currentIndex === diagnosticTasks.length - 1;
+  const hasGeneratedNextTask = currentIndex + 1 < diagnosticTasks.length;
+  const shouldWaitForNextTask =
+    !hasGeneratedNextTask && !isDiagnosticComplete && isLoadingNext;
+
+  function applyDiagnosticTasks(nextTasks: DiagnosticTask[]) {
+    diagnosticTasksRef.current = nextTasks;
+    setDiagnosticTasks(nextTasks);
+  }
+
+  function appendGeneratedTask(task: DiagnosticTask) {
+    const currentTasks = diagnosticTasksRef.current;
+    const existingIndex = currentTasks.findIndex((item) => item.id === task.id);
+
+    if (existingIndex >= 0) {
+      return existingIndex;
+    }
+
+    const nextTasks = [...currentTasks, task];
+    applyDiagnosticTasks(nextTasks);
+    return nextTasks.length - 1;
+  }
+
+  async function requestNextTask(
+    currentSessionId: number,
+    options: { openWhenReady?: boolean } = {}
+  ) {
+    if (isLoadingNextRef.current || isDiagnosticCompleteRef.current) {
+      return;
+    }
+
+    isLoadingNextRef.current = true;
+    setIsLoadingNext(true);
+    setNextError("");
+
+    try {
+      const data = await loadNextDiagnosticTask(currentSessionId);
+      if (isFinishingRef.current) {
+        return;
+      }
+
+      setTotalTasks(data.total_tasks);
+      setIsDiagnosticComplete(data.complete);
+      isDiagnosticCompleteRef.current = data.complete;
+
+      if (data.task) {
+        const taskIndex = appendGeneratedTask(data.task);
+
+        if (options.openWhenReady) {
+          setCurrentIndex(taskIndex);
+          setAnswer("");
+        }
+      }
+    } catch (err) {
+      console.error("Next diagnostic task error:", err);
+      if (!isFinishingRef.current) {
+        setNextError("Не удалось подготовить следующее задание. Можно попробовать ещё раз или завершить диагностику.");
+      }
+    } finally {
+      isLoadingNextRef.current = false;
+      setIsLoadingNext(false);
+    }
+  }
 
   async function loadDiagnostic() {
     setIsLoading(true);
     setError("");
+    setNextError("");
+    setIsDiagnosticComplete(false);
+    isDiagnosticCompleteRef.current = false;
+    isFinishingRef.current = false;
+    applyDiagnosticTasks([]);
 
     try {
       const data = await startDiagnostic();
 
       setSessionId(data.session_id);
-      setDiagnosticTasks(data.tasks);
+      applyDiagnosticTasks(data.tasks);
+      setTotalTasks(data.total_tasks);
+      setIsDiagnosticComplete(data.complete);
+      isDiagnosticCompleteRef.current = data.complete;
+      isFinishingRef.current = false;
       setCurrentIndex(0);
       setAnswer("");
       setAnswers([]);
+      setNextError("");
+
+      if (!data.complete) {
+        void requestNextTask(data.session_id);
+      }
     } catch (err) {
       console.error("Start diagnostic error:", err);
       setError("Не удалось загрузить диагностику. Возможно, AI-сервис временно недоступен.");
@@ -54,6 +139,11 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
   }
 
   useEffect(() => {
+    if (didAutoLoadRef.current) {
+      return;
+    }
+
+    didAutoLoadRef.current = true;
     loadDiagnostic();
   }, []);
 
@@ -91,24 +181,67 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
     setCurrentIndex(index);
   }
 
-  function handleNext() {
+  async function handleNext() {
     const updatedAnswers = saveCurrentAnswer();
+    setAnswers(updatedAnswers);
 
-    if (isLastTask) {
-      setAnswers(updatedAnswers);
-      setShowFinishModal(true);
+    const nextTask = diagnosticTasks[currentIndex + 1];
+    if (nextTask) {
+      setAnswer(getSavedAnswer(nextTask.id, updatedAnswers));
+      setCurrentIndex(currentIndex + 1);
+
+      if (
+        sessionId &&
+        currentIndex + 2 >= diagnosticTasks.length &&
+        !isDiagnosticCompleteRef.current
+      ) {
+        void requestNextTask(sessionId);
+      }
+
       return;
     }
 
-    const nextTask = diagnosticTasks[currentIndex + 1];
+    if (sessionId && !isDiagnosticCompleteRef.current) {
+      if (isLoadingNextRef.current) {
+        return;
+      }
 
-    setAnswers(updatedAnswers);
-    setAnswer(getSavedAnswer(nextTask.id, updatedAnswers));
-    setCurrentIndex(currentIndex + 1);
+      await requestNextTask(sessionId, { openWhenReady: true });
+      return;
+    }
+
+    setShowFinishModal(true);
+  }
+
+  function handleFinishClick() {
+    setAnswers(saveCurrentAnswer());
+    setShowFinishModal(true);
+  }
+
+  function retryNextTask() {
+    if (!sessionId) {
+      return;
+    }
+
+    void requestNextTask(sessionId);
+  }
+
+  function getNextButtonLabel() {
+    if (hasGeneratedNextTask) {
+      return "Следующее задание";
+    }
+
+    if (!isDiagnosticComplete) {
+      return isLoadingNext ? "Готовим следующее..." : "Сгенерировать следующее";
+    }
+
+    return "Завершить диагностику";
   }
 
   async function handleConfirmFinish() {
     if (!sessionId) return;
+
+    isFinishingRef.current = true;
 
     const updatedAnswers = saveCurrentAnswer();
 
@@ -126,6 +259,7 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
       onFinish(updatedAnswers);
     } catch (err) {
       console.error("Submit diagnostic error:", err);
+      isFinishingRef.current = false;
       setError("Не удалось завершить диагностику. Попробуй ещё раз.");
       setShowFinishModal(false);
     } finally {
@@ -165,6 +299,13 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
   const savedAnswers = saveCurrentAnswer();
   const answeredCount = savedAnswers.filter((item) => item.answer.trim()).length;
   const hasUnansweredTasks = answeredCount < diagnosticTasks.length;
+  const generatedCount = diagnosticTasks.length;
+  const progressTotal = totalTasks > 0 ? totalTasks : generatedCount;
+  const progressWidth = Math.min(
+    100,
+    ((currentIndex + 1) / progressTotal) * 100
+  );
+  const hasRemainingUnloadedTasks = generatedCount < totalTasks && !isDiagnosticComplete;
 
   return (
     <main className="diagnostic-page">
@@ -172,7 +313,7 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
         <div className="diagnostic-header">
           <p className="diagnostic-label">Диагностика</p>
           <span>
-            {currentIndex + 1} / {diagnosticTasks.length}
+            {currentIndex + 1} / {totalTasks}
           </span>
         </div>
 
@@ -180,9 +321,16 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
           <div
             className="diagnostic-progress-fill"
             style={{
-              width: `${((currentIndex + 1) / diagnosticTasks.length) * 100}%`,
+              width: `${progressWidth}%`,
             }}
           />
+        </div>
+
+        <div className="diagnostic-generation-status">
+          <span>
+            Готово заданий: {generatedCount} из {totalTasks}
+          </span>
+          {isLoadingNext && <span>ИИ готовит следующее...</span>}
         </div>
 
         <div className="diagnostic-navigation">
@@ -208,6 +356,14 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
         </div>
 
         {error && <p className="diagnostic-error">{error}</p>}
+        {nextError && (
+          <div className="diagnostic-warning">
+            <p>{nextError}</p>
+            <button type="button" onClick={retryNextTask} disabled={isLoadingNext}>
+              Попробовать снова
+            </button>
+          </div>
+        )}
 
         <p className="task-number">Задание №{currentTask.oge_number}</p>
 
@@ -222,9 +378,25 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
           />
         </label>
 
-        <button type="button" onClick={handleNext}>
-          {isLastTask ? "Завершить диагностику" : "Следующее задание"}
-        </button>
+        <div className="diagnostic-actions">
+          <button
+            type="button"
+            className="diagnostic-primary-button"
+            onClick={handleNext}
+            disabled={shouldWaitForNextTask || isSubmitting}
+          >
+            {getNextButtonLabel()}
+          </button>
+
+          <button
+            type="button"
+            className="diagnostic-secondary-button"
+            onClick={handleFinishClick}
+            disabled={isSubmitting}
+          >
+            Завершить сейчас
+          </button>
+        </div>
       </section>
 
       {showFinishModal && (
@@ -233,12 +405,16 @@ export function DiagnosticPage({ onFinish }: DiagnosticPageProps) {
             <h3>
               {hasUnansweredTasks
                 ? "У тебя есть нерешённые задания"
+                : hasRemainingUnloadedTasks
+                ? "Завершить до конца диагностики?"
                 : "Завершить диагностику?"}
             </h3>
 
             <p>
               {hasUnansweredTasks
                 ? "Ты действительно хочешь завершить диагностику? Нерешённые задания не будут учитываться."
+                : hasRemainingUnloadedTasks
+                ? "ИИ ещё не подготовил все задания, но можно завершить диагностику по уже решённым ответам."
                 : "После завершения ты перейдёшь к результату диагностики."}
             </p>
 
